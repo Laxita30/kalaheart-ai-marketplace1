@@ -1,11 +1,19 @@
-import { Link, useLocation } from "react-router-dom";
-import { Heart, ShoppingCart, User } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Heart, ShoppingCart, User, LogOut } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const isLanding = location.pathname === "/";
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <nav className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
@@ -15,7 +23,7 @@ const Navbar = () => {
           <span className="text-xl font-bold font-display text-primary">KalaHeart</span>
         </Link>
 
-        {isLanding ? (
+        {isLanding && !user ? (
           <>
             <div className="hidden md:flex items-center gap-8 text-sm font-medium">
               <a href="#mission" className="text-foreground/70 hover:text-foreground transition-colors">Our Mission</a>
@@ -36,9 +44,15 @@ const Navbar = () => {
             <Link to="/cart" className="text-foreground/60 hover:text-foreground transition-colors">
               <ShoppingCart className="h-5 w-5" />
             </Link>
-            <Link to="/login" className="text-foreground/60 hover:text-foreground transition-colors">
-              <User className="h-5 w-5" />
-            </Link>
+            {user ? (
+              <button onClick={handleSignOut} className="text-foreground/60 hover:text-foreground transition-colors" title="Sign out">
+                <LogOut className="h-5 w-5" />
+              </button>
+            ) : (
+              <Link to="/login" className="text-foreground/60 hover:text-foreground transition-colors">
+                <User className="h-5 w-5" />
+              </Link>
+            )}
           </div>
         )}
       </div>

@@ -1,11 +1,31 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { signIn } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await signIn(email, password);
+    setLoading(false);
+    if (error) {
+      toast({ title: "Login failed", description: error.message, variant: "destructive" });
+    } else {
+      navigate("/browse");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -13,12 +33,12 @@ const Login = () => {
         <h1 className="text-3xl font-display font-bold text-center">Welcome Back</h1>
         <p className="text-center text-muted-foreground mt-2 text-sm">Log in to your KalaHeart account to explore unique art.</p>
 
-        <form className="mt-8 space-y-5" onSubmit={(e) => e.preventDefault()}>
+        <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
           <div>
             <label className="text-sm font-medium mb-1.5 block">Email</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="your.email@example.com" className="pl-10" type="email" />
+              <Input placeholder="your.email@example.com" className="pl-10" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
           </div>
 
@@ -30,18 +50,19 @@ const Login = () => {
                 placeholder="••••••••"
                 className="pl-10 pr-10"
                 type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
           </div>
 
-          <Button className="w-full" size="lg" type="submit">Login</Button>
+          <Button className="w-full" size="lg" type="submit" disabled={loading}>
+            {loading ? "Logging in..." : "Login"}
+          </Button>
         </form>
 
         <p className="text-center mt-4">
