@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Heart, ShoppingCart, User, LogOut } from "lucide-react";
+import { Heart, ShoppingCart, User, LogOut, Store } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,6 +38,11 @@ const Navbar = () => {
           </>
         ) : (
           <div className="flex items-center gap-4">
+            {user && (
+              <Link to="/artist" className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-foreground/70 hover:text-primary transition-colors">
+                <Store className="h-4 w-4" /> Sell
+              </Link>
+            )}
             <Link to="/favorites" className="text-foreground/60 hover:text-foreground transition-colors">
               <Heart className="h-5 w-5" />
             </Link>
