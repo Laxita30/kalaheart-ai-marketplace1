@@ -3,6 +3,7 @@ import { Heart, ShoppingCart, User, LogOut, Store } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import NotificationsBell from "@/components/NotificationsBell";
 
 const Navbar = () => {
   const location = useLocation();
@@ -43,6 +44,7 @@ const Navbar = () => {
                 <Store className="h-4 w-4" /> Sell
               </Link>
             )}
+            {user && <NotificationsBell />}
             <Link to="/favorites" className="text-foreground/60 hover:text-foreground transition-colors">
               <Heart className="h-5 w-5" />
             </Link>
