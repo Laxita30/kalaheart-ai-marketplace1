@@ -213,25 +213,28 @@ export async function updateOrderStatus(orderId: string, status: string) {
     .select()
     .single();
   if (error) throw error;
-  // Best-effort: create an in-app notification for the buyer
+  // Best-effort: create an in-app notification for the buyer, respecting their preferences
   if (data?.user_id) {
     const copy = statusNotificationCopy(status);
     if (copy) {
-      await supabase.from("notifications").insert({
-        user_id: data.user_id,
-        type: `order_${status}`,
-        title: copy.title,
-        body: copy.body,
-        link: "/orders",
-        order_id: orderId,
-      });
+      const prefs = await getNotificationPreferencesFor(data.user_id);
+      const channel = status === "delivered" ? "inapp_delivery_events" : "inapp_order_updates";
+      if (prefs[channel]) {
+        await supabase.from("notifications").insert({
+          user_id: data.user_id,
+          type: `order_${status}`,
+          title: copy.title,
+          body: copy.body,
+          link: "/orders",
+          order_id: orderId,
+        });
+      }
     }
   }
   return data;
 }
 
 function statusNotificationCopy(status: string) {
-  const short = `Order #${""}`; // placeholder, body filled below
   switch (status) {
     case "accepted":
       return { title: "Order accepted", body: "Your order has been accepted by the artist." };
@@ -277,5 +280,41 @@ export async function markAllNotificationsRead() {
     .update({ read: true })
     .eq("user_id", user.id)
     .eq("read", false);
+  if (error) throw error;
+}
+
+// ============ Notification preferences ============
+
+export type NotificationPreferences = {
+  inapp_order_updates: boolean;
+  inapp_delivery_events: boolean;
+};
+
+const DEFAULT_PREFS: NotificationPreferences = {
+  inapp_order_updates: true,
+  inapp_delivery_events: true,
+};
+
+async function getNotificationPreferencesFor(userId: string): Promise<NotificationPreferences> {
+  const { data } = await supabase
+    .from("notification_preferences")
+    .select("inapp_order_updates, inapp_delivery_events")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return data ?? DEFAULT_PREFS;
+}
+
+export async function getMyNotificationPreferences(): Promise<NotificationPreferences> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return DEFAULT_PREFS;
+  return getNotificationPreferencesFor(user.id);
+}
+
+export async function updateMyNotificationPreferences(prefs: NotificationPreferences) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Must be logged in");
+  const { error } = await supabase
+    .from("notification_preferences")
+    .upsert({ user_id: user.id, ...prefs }, { onConflict: "user_id" });
   if (error) throw error;
 }
