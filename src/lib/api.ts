@@ -213,5 +213,69 @@ export async function updateOrderStatus(orderId: string, status: string) {
     .select()
     .single();
   if (error) throw error;
+  // Best-effort: create an in-app notification for the buyer
+  if (data?.user_id) {
+    const copy = statusNotificationCopy(status);
+    if (copy) {
+      await supabase.from("notifications").insert({
+        user_id: data.user_id,
+        type: `order_${status}`,
+        title: copy.title,
+        body: copy.body,
+        link: "/orders",
+        order_id: orderId,
+      });
+    }
+  }
   return data;
+}
+
+function statusNotificationCopy(status: string) {
+  const short = `Order #${""}`; // placeholder, body filled below
+  switch (status) {
+    case "accepted":
+      return { title: "Order accepted", body: "Your order has been accepted by the artist." };
+    case "rejected":
+      return { title: "Order rejected", body: "Unfortunately, your order was rejected by the artist." };
+    case "shipped":
+      return { title: "Order shipped", body: "Your order is on its way!" };
+    case "delivered":
+      return { title: "Order delivered", body: "Your order has been marked as delivered. Enjoy!" };
+    default:
+      return null;
+  }
+}
+
+// ============ Notifications ============
+
+export async function getMyNotifications(limit = 20) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data || [];
+}
+
+export async function markNotificationRead(id: string) {
+  const { error } = await supabase
+    .from("notifications")
+    .update({ read: true })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function markAllNotificationsRead() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  const { error } = await supabase
+    .from("notifications")
+    .update({ read: true })
+    .eq("user_id", user.id)
+    .eq("read", false);
+  if (error) throw error;
 }
