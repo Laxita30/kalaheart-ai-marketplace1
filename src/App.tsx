@@ -13,6 +13,8 @@ import Signup from "./pages/Signup";
 import Cart from "./pages/Cart";
 import Favorites from "./pages/Favorites";
 import NotificationPreferencesPage from "./pages/NotificationPreferences";
+import Orders from "./pages/Orders";
+import OrderDetail from "./pages/OrderDetail";
 import NotFound from "./pages/NotFound";
 import ArtistOverview from "./pages/artist/ArtistOverview";
 import ArtistProducts from "./pages/artist/ArtistProducts";
@@ -38,6 +40,8 @@ const App = () => (
             <Route path="/cart" element={<Cart />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/settings/notifications" element={<NotificationPreferencesPage />} />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/orders/:id" element={<OrderDetail />} />
             <Route path="/artist" element={<ArtistOverview />} />
             <Route path="/artist/products" element={<ArtistProducts />} />
             <Route path="/artist/orders" element={<ArtistOrders />} />

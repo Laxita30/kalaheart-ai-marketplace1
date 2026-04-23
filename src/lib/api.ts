@@ -225,7 +225,7 @@ export async function updateOrderStatus(orderId: string, status: string) {
           type: `order_${status}`,
           title: copy.title,
           body: copy.body,
-          link: "/orders",
+          link: `/orders/${orderId}`,
           order_id: orderId,
         });
       }
