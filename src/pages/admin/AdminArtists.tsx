@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { logAdminAction } from "@/lib/adminAudit";
 
 const AdminArtists = () => {
   const [rows, setRows] = useState<any[]>([]);
@@ -21,11 +22,17 @@ const AdminArtists = () => {
 
   useEffect(() => { load(); }, []);
 
-  const toggleApproval = async (id: string, approved: boolean) => {
+  const toggleApproval = async (id: string, approved: boolean, shop_name: string) => {
     const { error } = await supabase.from("artists").update({ approved: !approved }).eq("id", id);
     if (error) {
       toast({ title: "Failed", description: error.message, variant: "destructive" });
     } else {
+      await logAdminAction({
+        action: !approved ? "artist_approved" : "artist_revoked",
+        target_type: "artist",
+        target_id: id,
+        details: { shop_name },
+      });
       toast({ title: !approved ? "Artist approved" : "Approval revoked" });
       load();
     }
@@ -61,7 +68,7 @@ const AdminArtists = () => {
                   </TableCell>
                   <TableCell>{new Date(a.created_at).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">
-                    <Button size="sm" variant={a.approved ? "outline" : "default"} onClick={() => toggleApproval(a.id, a.approved)}>
+                    <Button size="sm" variant={a.approved ? "outline" : "default"} onClick={() => toggleApproval(a.id, a.approved, a.shop_name)}>
                       {a.approved ? "Revoke" : "Approve"}
                     </Button>
                   </TableCell>
