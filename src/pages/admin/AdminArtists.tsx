@@ -68,7 +68,7 @@ const AdminArtists = () => {
                   </TableCell>
                   <TableCell>{new Date(a.created_at).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">
-                    <Button size="sm" variant={a.approved ? "outline" : "default"} onClick={() => toggleApproval(a.id, a.approved)}>
+                    <Button size="sm" variant={a.approved ? "outline" : "default"} onClick={() => toggleApproval(a.id, a.approved, a.shop_name)}>
                       {a.approved ? "Revoke" : "Approve"}
                     </Button>
                   </TableCell>
