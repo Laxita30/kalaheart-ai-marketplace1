@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Loader2 } from "lucide-react";
 import ArtistDashboardLayout from "@/components/ArtistDashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { createProduct, deleteProduct, getMyProducts, updateProduct, getMyArtist } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
 type Product = Awaited<ReturnType<typeof getMyProducts>>[number];
@@ -22,6 +23,7 @@ const ArtistProducts = () => {
   const [editing, setEditing] = useState<Product | null>(null);
   const [form, setForm] = useState(empty);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -69,6 +71,31 @@ const ArtistProducts = () => {
     } catch (e: any) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
     } finally { setSaving(false); }
+  };
+
+  const uploadPhotos = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not signed in");
+      const urls: string[] = [];
+      for (const file of Array.from(files)) {
+        const ext = file.name.split(".").pop() ?? "jpg";
+        const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+        const { error } = await supabase.storage.from("product-photos").upload(path, file);
+        if (error) throw error;
+        const { data } = supabase.storage.from("product-photos").getPublicUrl(path);
+        urls.push(data.publicUrl);
+      }
+      const existing = form.images.split(",").map((s) => s.trim()).filter(Boolean);
+      setForm({ ...form, images: [...existing, ...urls].join(", ") });
+      toast({ title: `Uploaded ${urls.length} photo${urls.length > 1 ? "s" : ""}` });
+    } catch (e: any) {
+      toast({ title: "Upload failed", description: e.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const remove = async (p: Product) => {
@@ -132,7 +159,26 @@ const ArtistProducts = () => {
               <Input placeholder="Stock" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
             </div>
             <Input placeholder="Category (e.g. Pottery)" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
-            <Input placeholder="Image URLs (comma-separated)" value={form.images} onChange={(e) => setForm({ ...form, images: e.target.value })} />
+            <div>
+              <label className="flex flex-col items-center justify-center gap-1.5 border-2 border-dashed rounded-lg p-4 cursor-pointer hover:bg-muted/40 transition-colors">
+                {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5 text-muted-foreground" />}
+                <span className="text-sm font-medium">{uploading ? "Uploading…" : "Upload product photos"}</span>
+                <span className="text-xs text-muted-foreground">PNG, JPG — multiple allowed</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => uploadPhotos(e.target.files)}
+                />
+              </label>
+              <Input
+                placeholder="Or paste image URLs (comma-separated)"
+                className="mt-2"
+                value={form.images}
+                onChange={(e) => setForm({ ...form, images: e.target.value })}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
