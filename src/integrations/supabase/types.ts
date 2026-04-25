@@ -46,35 +46,56 @@ export type Database = {
       }
       artists: {
         Row: {
+          ai_story: string | null
           approved: boolean | null
           created_at: string
           description: string | null
           id: string
+          id_proof_url: string | null
           portfolio_url: string | null
+          profile_photo_url: string | null
           rating: number | null
+          review_notes: string | null
+          review_status: string
           shop_name: string
+          story_language: string | null
+          submitted_at: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          ai_story?: string | null
           approved?: boolean | null
           created_at?: string
           description?: string | null
           id?: string
+          id_proof_url?: string | null
           portfolio_url?: string | null
+          profile_photo_url?: string | null
           rating?: number | null
+          review_notes?: string | null
+          review_status?: string
           shop_name: string
+          story_language?: string | null
+          submitted_at?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          ai_story?: string | null
           approved?: boolean | null
           created_at?: string
           description?: string | null
           id?: string
+          id_proof_url?: string | null
           portfolio_url?: string | null
+          profile_photo_url?: string | null
           rating?: number | null
+          review_notes?: string | null
+          review_status?: string
           shop_name?: string
+          story_language?: string | null
+          submitted_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -309,11 +330,13 @@ export type Database = {
       profiles: {
         Row: {
           address: string | null
+          age: number | null
           avatar_url: string | null
           blocked: boolean
           created_at: string
           email: string | null
           first_name: string | null
+          gender: string | null
           id: string
           last_name: string | null
           phone: string | null
@@ -322,11 +345,13 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          age?: number | null
           avatar_url?: string | null
           blocked?: boolean
           created_at?: string
           email?: string | null
           first_name?: string | null
+          gender?: string | null
           id?: string
           last_name?: string | null
           phone?: string | null
@@ -335,11 +360,13 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          age?: number | null
           avatar_url?: string | null
           blocked?: boolean
           created_at?: string
           email?: string | null
           first_name?: string | null
+          gender?: string | null
           id?: string
           last_name?: string | null
           phone?: string | null

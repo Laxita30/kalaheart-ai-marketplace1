@@ -10,6 +10,9 @@ import BrowseProducts from "./pages/BrowseProducts";
 import ProductDetail from "./pages/ProductDetail";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import RoleSelect from "./pages/RoleSelect";
+import AdminLogin from "./pages/AdminLogin";
+import ArtistSignup from "./pages/ArtistSignup";
 import Cart from "./pages/Cart";
 import Favorites from "./pages/Favorites";
 import NotificationPreferencesPage from "./pages/NotificationPreferences";
@@ -27,6 +30,7 @@ import AdminArtists from "./pages/admin/AdminArtists";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
+import AdminArtistReview from "./pages/admin/AdminArtistReview";
 
 const queryClient = new QueryClient();
 
@@ -39,10 +43,13 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/welcome" element={<RoleSelect />} />
             <Route path="/browse" element={<BrowseProducts />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/artist/signup" element={<ArtistSignup />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/settings/notifications" element={<NotificationPreferencesPage />} />
@@ -56,6 +63,7 @@ const App = () => (
             <Route path="/admin" element={<AdminOverview />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/artists" element={<AdminArtists />} />
+            <Route path="/admin/artists/review" element={<AdminArtistReview />} />
             <Route path="/admin/products" element={<AdminProducts />} />
             <Route path="/admin/orders" element={<AdminOrders />} />
             <Route path="/admin/audit" element={<AdminAuditLog />} />

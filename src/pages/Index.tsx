@@ -24,11 +24,11 @@ const Index = () => (
               KalaHeart empowers local artisans by connecting them with a global audience, enriching lives through unique, handcrafted creations.
             </p>
             <div className="flex gap-3 mt-8">
-              <Link to="/browse">
-                <Button size="lg">Explore as User</Button>
+              <Link to="/welcome">
+                <Button size="lg">Get started</Button>
               </Link>
-              <Link to="/signup">
-                <Button variant="outline" size="lg">Join as Artist</Button>
+              <Link to="/browse">
+                <Button variant="outline" size="lg">Browse art</Button>
               </Link>
             </div>
           </div>
