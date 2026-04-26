@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logRecConversion } from "@/lib/recAnalytics";
 
 export async function addToCart(productId: string, quantity = 1) {
   const { data: { user } } = await supabase.auth.getUser();
@@ -11,6 +12,8 @@ export async function addToCart(productId: string, quantity = 1) {
       { onConflict: "user_id,product_id" }
     );
   if (error) throw error;
+  // Buy-intent attribution for AI recommendations
+  await logRecConversion(productId, "purchase").catch(() => {});
 }
 
 export async function removeFromCart(productId: string) {
@@ -53,6 +56,7 @@ export async function toggleWishlist(productId: string) {
     return false;
   } else {
     await supabase.from("wishlist").insert({ user_id: user.id, product_id: productId });
+    await logRecConversion(productId, "wishlist").catch(() => {});
     return true;
   }
 }
