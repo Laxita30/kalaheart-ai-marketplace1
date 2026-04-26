@@ -396,6 +396,39 @@ export type Database = {
         }
         Relationships: []
       }
+      recommendation_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          product_id: string
+          reason: string
+          source_product_id: string | null
+          surface: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          product_id: string
+          reason?: string
+          source_product_id?: string | null
+          surface?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          product_id?: string
+          reason?: string
+          source_product_id?: string | null
+          surface?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           comment: string | null
@@ -489,6 +522,19 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      rec_analytics_summary: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          clicks: number
+          ctr: number
+          impressions: number
+          purchase_rate: number
+          purchases: number
+          reason: string
+          wishlist_rate: number
+          wishlists: number
+        }[]
       }
     }
     Enums: {

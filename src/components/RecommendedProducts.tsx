@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Sparkles, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { logRecClick, logRecImpressions } from "@/lib/recAnalytics";
 
 type RecProduct = {
   id: string;
@@ -28,6 +29,8 @@ const RecommendedProducts = ({
 }: Props) => {
   const [products, setProducts] = useState<RecProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reason, setReason] = useState<string>("ai");
+  const surface = currentProductId ? "product_detail" : "home";
 
   useEffect(() => {
     let cancelled = false;
@@ -39,6 +42,8 @@ const RecommendedProducts = ({
         });
         if (error) throw error;
         const ids: string[] = data?.productIds ?? [];
+        const recReason: string = data?.reason ?? "ai";
+        if (!cancelled) setReason(recReason);
         if (ids.length === 0) {
           if (!cancelled) setProducts([]);
           return;
@@ -50,7 +55,16 @@ const RecommendedProducts = ({
         const ordered = ids
           .map((id) => (rows ?? []).find((r) => r.id === id))
           .filter(Boolean) as RecProduct[];
-        if (!cancelled) setProducts(ordered);
+        if (!cancelled) {
+          setProducts(ordered);
+          // Fire impression events for what's actually shown
+          logRecImpressions(
+            ordered.map((p) => p.id),
+            recReason,
+            surface,
+            currentProductId,
+          );
+        }
       } catch (e) {
         console.error("Failed to load recommendations", e);
         if (!cancelled) setProducts([]);
@@ -61,7 +75,7 @@ const RecommendedProducts = ({
     return () => {
       cancelled = true;
     };
-  }, [currentProductId, limit]);
+  }, [currentProductId, limit, surface]);
 
   if (!loading && products.length === 0) return null;
 
@@ -91,6 +105,7 @@ const RecommendedProducts = ({
             <Link
               key={p.id}
               to={`/product/${p.id}`}
+              onClick={() => logRecClick(p.id, reason, surface, currentProductId)}
               className="group block rounded-lg border bg-card overflow-hidden hover:shadow-lg transition-shadow"
             >
               <div className="aspect-square overflow-hidden bg-muted">

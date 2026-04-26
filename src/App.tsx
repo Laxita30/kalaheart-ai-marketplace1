@@ -31,6 +31,7 @@ import AdminProducts from "./pages/admin/AdminProducts";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminArtistReview from "./pages/admin/AdminArtistReview";
+import AdminRecommendations from "./pages/admin/AdminRecommendations";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +68,7 @@ const App = () => (
             <Route path="/admin/products" element={<AdminProducts />} />
             <Route path="/admin/orders" element={<AdminOrders />} />
             <Route path="/admin/audit" element={<AdminAuditLog />} />
+            <Route path="/admin/recommendations" element={<AdminRecommendations />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Chatbot />
