@@ -1,15 +1,18 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Mail, Lock, Eye, EyeOff, User, Phone, MapPin, Palette,
-  Mic, MicOff, Sparkles, Upload, Image as ImageIcon, FileCheck2, Check, X, Loader2,
+  Mic, MicOff, Sparkles, Image as ImageIcon, FileCheck2, Check, X,
+  Loader2, Camera, IdCard, Globe2, Wand2, Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +27,8 @@ const LANGUAGES = [
   { code: "mr-IN", label: "Marathi" },
   { code: "gu-IN", label: "Gujarati" },
   { code: "kn-IN", label: "Kannada" },
+  { code: "pa-IN", label: "Punjabi" },
+  { code: "ml-IN", label: "Malayalam" },
   { code: "es-ES", label: "Spanish" },
   { code: "fr-FR", label: "French" },
   { code: "de-DE", label: "German" },
@@ -37,9 +42,7 @@ const ArtistSignup = () => {
   const { toast } = useToast();
   const { signUp } = useAuth();
 
-  const [step, setStep] = useState(1);
-
-  // Step 1: account
+  // Account
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -48,7 +51,7 @@ const ArtistSignup = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  // Step 2: shop + AI story
+  // Shop + AI story
   const [shopName, setShopName] = useState("");
   const [language, setLanguage] = useState("en-US");
   const [rawNotes, setRawNotes] = useState("");
@@ -56,9 +59,9 @@ const ArtistSignup = () => {
   const [generatingStory, setGeneratingStory] = useState(false);
   const speech = useSpeechRecognition(language);
 
-  // Step 3: uploads
-  const [idProof, setIdProof] = useState<File | null>(null);
+  // Uploads
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
+  const [idProof, setIdProof] = useState<File | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -71,7 +74,6 @@ const ArtistSignup = () => {
   }), [password]);
   const passwordValid = Object.values(passwordChecks).every(Boolean);
 
-  // Sync speech transcript into the notes field
   const liveNotes = speech.transcript || rawNotes;
 
   const toggleMic = () => {
@@ -95,7 +97,11 @@ const ArtistSignup = () => {
   const generateStory = async () => {
     const text = (speech.listening ? speech.transcript : rawNotes).trim();
     if (!text) {
-      toast({ title: "Add some notes first", description: "Type or speak about your craft.", variant: "destructive" });
+      toast({
+        title: "Add some notes first",
+        description: "Type or speak about your craft and inspiration.",
+        variant: "destructive",
+      });
       return;
     }
     setGeneratingStory(true);
@@ -107,32 +113,16 @@ const ArtistSignup = () => {
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       setAiStory((data as any).story ?? "");
-      toast({ title: "Story generated!", description: "Edit it freely before submitting." });
+      toast({ title: "Story generated", description: "Edit it freely before submitting." });
     } catch (e: any) {
-      toast({ title: "Could not generate story", description: e.message, variant: "destructive" });
+      toast({
+        title: "Could not generate story",
+        description: e.message,
+        variant: "destructive",
+      });
     } finally {
       setGeneratingStory(false);
     }
-  };
-
-  const goNext = () => {
-    if (step === 1) {
-      if (!firstName || !email || !passwordValid) {
-        toast({ title: "Please complete all fields", description: "Password must meet all criteria.", variant: "destructive" });
-        return;
-      }
-    }
-    if (step === 2) {
-      if (!shopName.trim()) {
-        toast({ title: "Shop name required", variant: "destructive" });
-        return;
-      }
-      if (!aiStory.trim()) {
-        toast({ title: "Generate or write your story before continuing", variant: "destructive" });
-        return;
-      }
-    }
-    setStep((s) => s + 1);
   };
 
   const uploadFile = async (bucket: string, userId: string, file: File) => {
@@ -140,22 +130,47 @@ const ArtistSignup = () => {
     const path = `${userId}/${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: false });
     if (error) throw error;
-    if (bucket === "artist-ids") {
-      // private bucket: store path only
-      return path;
-    }
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-    return data.publicUrl;
+    if (bucket === "artist-ids") return path;
+    return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
   };
 
-  const submit = async () => {
-    if (!idProof || !profilePhoto) {
-      toast({ title: "Both ID proof and profile photo are required", variant: "destructive" });
-      return;
+  const validate = () => {
+    if (!firstName.trim() || !email.trim()) {
+      toast({ title: "Name and email required", variant: "destructive" });
+      return false;
     }
+    if (!passwordValid) {
+      toast({ title: "Password doesn't meet criteria", variant: "destructive" });
+      return false;
+    }
+    if (!shopName.trim()) {
+      toast({ title: "Shop name required", variant: "destructive" });
+      return false;
+    }
+    if (!aiStory.trim()) {
+      toast({
+        title: "Generate or write your story",
+        description: "Use voice or text and click Generate.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    if (!profilePhoto) {
+      toast({ title: "Add an artist photo", variant: "destructive" });
+      return false;
+    }
+    if (!idProof) {
+      toast({ title: "Add an ID proof image", variant: "destructive" });
+      return false;
+    }
+    return true;
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
     setSubmitting(true);
     try {
-      // 1. Create auth account
       const { error: signErr } = await signUp(email, password, {
         first_name: firstName,
         last_name: lastName,
@@ -164,12 +179,11 @@ const ArtistSignup = () => {
       });
       if (signErr) throw signErr;
 
-      // 2. Sign in immediately so we can upload + insert (auto-confirm assumed; if not, user must confirm)
       const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password });
       if (loginErr) {
         toast({
           title: "Account created — please verify your email",
-          description: "After verifying, log in and complete your shop submission from your dashboard.",
+          description: "After verifying, log in and complete your shop submission.",
         });
         navigate("/login");
         return;
@@ -177,11 +191,9 @@ const ArtistSignup = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Could not establish session");
 
-      // 3. Upload files
-      const idPath = await uploadFile("artist-ids", user.id, idProof);
-      const photoUrl = await uploadFile("artist-photos", user.id, profilePhoto);
+      const idPath = await uploadFile("artist-ids", user.id, idProof!);
+      const photoUrl = await uploadFile("artist-photos", user.id, profilePhoto!);
 
-      // 4. Insert artist row (review_status defaults to pending)
       const langLabel = LANGUAGES.find((l) => l.code === language)?.label ?? "English";
       const { error: insertErr } = await supabase.from("artists").insert({
         user_id: user.id,
@@ -199,7 +211,7 @@ const ArtistSignup = () => {
 
       toast({
         title: "Submitted for review!",
-        description: "An admin will review your shop shortly. You can sign in to track status.",
+        description: "An admin will review your shop shortly.",
       });
       navigate("/artist");
     } catch (e: any) {
@@ -210,262 +222,293 @@ const ArtistSignup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-500/5 via-background to-pink-500/5 p-4 py-8">
-      <div className="max-w-2xl mx-auto">
-        {/* Stepper */}
-        <div className="flex items-center justify-center gap-2 mb-6">
-          {[1, 2, 3].map((n) => (
-            <div key={n} className="flex items-center">
-              <div
-                className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-semibold ${
-                  step >= n ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {n}
-              </div>
-              {n < 3 && <div className={`h-0.5 w-12 ${step > n ? "bg-primary" : "bg-muted"}`} />}
-            </div>
-          ))}
+    <div className="min-h-screen bg-gradient-to-br from-rose-500/10 via-background to-amber-500/10">
+      <div className="container max-w-5xl py-10">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="inline-flex h-14 w-14 rounded-2xl bg-primary/10 items-center justify-center mb-4">
+            <Palette className="h-7 w-7 text-primary" />
+          </div>
+          <h1 className="text-3xl md:text-4xl font-display font-bold">Become a KalaHeart Artisan</h1>
+          <p className="text-muted-foreground mt-2 max-w-xl mx-auto">
+            Tell us your craft story in your own voice — our AI will help shape it into something beautiful in your language.
+          </p>
         </div>
 
-        <Card className="p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Palette className="h-6 w-6 text-primary" />
+        <form onSubmit={submit} className="space-y-6">
+          {/* Section 1: Account */}
+          <SectionCard
+            number={1}
+            icon={User}
+            title="Your account"
+            subtitle="So shoppers can reach you and you can manage your shop."
+          >
+            <div className="grid md:grid-cols-2 gap-4">
+              <Field label="First name">
+                <IconInput Icon={User} value={firstName} onChange={setFirstName} placeholder="Maya" />
+              </Field>
+              <Field label="Last name">
+                <IconInput Icon={User} value={lastName} onChange={setLastName} placeholder="Patel" />
+              </Field>
             </div>
-            <div>
-              <h1 className="text-2xl font-display font-bold">
-                {step === 1 && "Create your artisan account"}
-                {step === 2 && "Tell us your story"}
-                {step === 3 && "Verify your identity"}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {step === 1 && "We'll set up your shop in just a few steps."}
-                {step === 2 && "Use voice or text — our AI will polish it in your language."}
-                {step === 3 && "Upload your ID and a profile photo for admin review."}
-              </p>
+            <Field label="Email">
+              <IconInput Icon={Mail} type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
+            </Field>
+            <div className="grid md:grid-cols-2 gap-4">
+              <Field label="Phone">
+                <IconInput Icon={Phone} value={phone} onChange={setPhone} placeholder="+91 ..." />
+              </Field>
+              <Field label="Address">
+                <IconInput Icon={MapPin} value={address} onChange={setAddress} placeholder="City, Country" />
+              </Field>
             </div>
-          </div>
-
-          {step === 1 && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>First name</Label>
-                  <div className="relative mt-1.5">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} className="pl-10" placeholder="Maya" />
-                  </div>
-                </div>
-                <div>
-                  <Label>Last name</Label>
-                  <div className="relative mt-1.5">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input value={lastName} onChange={(e) => setLastName(e.target.value)} className="pl-10" placeholder="Patel" />
-                  </div>
-                </div>
-              </div>
-              <div>
-                <Label>Email</Label>
-                <div className="relative mt-1.5">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" placeholder="you@example.com" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Phone</Label>
-                  <div className="relative mt-1.5">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input value={phone} onChange={(e) => setPhone(e.target.value)} className="pl-10" placeholder="+91 ..." />
-                  </div>
-                </div>
-                <div>
-                  <Label>Address</Label>
-                  <div className="relative mt-1.5">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input value={address} onChange={(e) => setAddress(e.target.value)} className="pl-10" placeholder="City, Country" />
-                  </div>
-                </div>
-              </div>
-              <div>
-                <Label>Password</Label>
-                <div className="relative mt-1.5">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10"
-                    placeholder="Create a strong password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                {password && (
-                  <ul className="mt-2 grid grid-cols-2 gap-y-1 gap-x-3 text-xs">
-                    {[
-                      { ok: passwordChecks.length, label: "At least 8 characters" },
-                      { ok: passwordChecks.upper, label: "One uppercase letter" },
-                      { ok: passwordChecks.lower, label: "One lowercase letter" },
-                      { ok: passwordChecks.number, label: "One number" },
-                      { ok: passwordChecks.special, label: "One special character" },
-                    ].map((c) => (
-                      <li key={c.label} className={`flex items-center gap-1.5 ${c.ok ? "text-green-600 dark:text-green-500" : "text-muted-foreground"}`}>
-                        {c.ok ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
-                        {c.label}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="space-y-4">
-              <div>
-                <Label>Shop name</Label>
+            <Field label="Password">
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  value={shopName}
-                  onChange={(e) => setShopName(e.target.value)}
-                  className="mt-1.5"
-                  placeholder="e.g. Maya's Pottery Studio"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10 pr-10"
+                  placeholder="Create a strong password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
-              <div>
-                <Label>Story language</Label>
-                <Select value={language} onValueChange={setLanguage}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LANGUAGES.map((l) => (
-                      <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <Label>Your raw notes (text or voice)</Label>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={speech.listening ? "destructive" : "outline"}
-                    onClick={toggleMic}
-                  >
-                    {speech.listening ? (
-                      <><MicOff className="h-4 w-4" /> Stop</>
-                    ) : (
-                      <><Mic className="h-4 w-4" /> Speak</>
-                    )}
-                  </Button>
-                </div>
-                <Textarea
-                  rows={4}
-                  value={liveNotes}
-                  onChange={(e) => {
-                    setRawNotes(e.target.value);
-                    speech.setExternalText(e.target.value);
-                  }}
-                  placeholder="Tell us about your craft, materials, inspiration, heritage…"
-                />
-                {speech.error && <p className="text-xs text-destructive mt-1">{speech.error}</p>}
-                {!speech.supported && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Voice input requires Chrome or Edge. You can type instead.
-                  </p>
-                )}
-              </div>
-              <Button
-                type="button"
-                onClick={generateStory}
-                disabled={generatingStory}
-                className="w-full"
-                variant="secondary"
-              >
-                {generatingStory ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Generating with AI…</>
-                ) : (
-                  <><Sparkles className="h-4 w-4" /> Generate my story with AI</>
-                )}
-              </Button>
-              {aiStory && (
-                <div>
-                  <Label>Your story (editable)</Label>
-                  <Textarea
-                    rows={7}
-                    value={aiStory}
-                    onChange={(e) => setAiStory(e.target.value)}
-                    className="mt-1.5"
-                  />
-                </div>
+              {password && (
+                <ul className="mt-2 grid grid-cols-2 gap-y-1 gap-x-3 text-xs">
+                  {[
+                    { ok: passwordChecks.length, label: "At least 8 characters" },
+                    { ok: passwordChecks.upper, label: "One uppercase letter" },
+                    { ok: passwordChecks.lower, label: "One lowercase letter" },
+                    { ok: passwordChecks.number, label: "One number" },
+                    { ok: passwordChecks.special, label: "One special character" },
+                  ].map((c) => (
+                    <li
+                      key={c.label}
+                      className={`flex items-center gap-1.5 ${c.ok ? "text-green-600 dark:text-green-500" : "text-muted-foreground"}`}
+                    >
+                      {c.ok ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
+                      {c.label}
+                    </li>
+                  ))}
+                </ul>
               )}
-            </div>
-          )}
+            </Field>
+          </SectionCard>
 
-          {step === 3 && (
-            <div className="space-y-5">
-              <FileDrop
-                label="Government ID proof"
-                hint="PDF, JPG or PNG. Kept private — only you and admins can view."
-                Icon={FileCheck2}
-                file={idProof}
-                accept="image/*,application/pdf"
-                onFile={setIdProof}
-              />
-              <FileDrop
-                label="Your profile photo"
-                hint="Shown on your shop page."
+          {/* Section 2: Photos & ID */}
+          <SectionCard
+            number={2}
+            icon={Camera}
+            title="Your photo & verification"
+            subtitle="A friendly photo for your shop, and an ID proof admins will review privately."
+          >
+            <div className="grid md:grid-cols-2 gap-5">
+              <PhotoCard
+                label="Artist photo"
+                hint="Square headshot looks best."
                 Icon={ImageIcon}
                 file={profilePhoto}
                 accept="image/*"
                 onFile={setProfilePhoto}
+                preview
               />
-              <div className="rounded-lg bg-muted/50 p-4 text-sm text-muted-foreground">
-                After submission, an admin will review your application. You'll get a notification when your shop is approved.
-              </div>
+              <PhotoCard
+                label="Government ID proof"
+                hint="Passport, driver's license, etc. Stays private."
+                Icon={IdCard}
+                file={idProof}
+                accept="image/*,application/pdf"
+                onFile={setIdProof}
+                preview
+              />
             </div>
-          )}
+          </SectionCard>
 
-          <div className="flex justify-between mt-8">
-            {step > 1 ? (
-              <Button variant="outline" onClick={() => setStep((s) => s - 1)} disabled={submitting}>
-                Back
-              </Button>
-            ) : (
-              <span />
+          {/* Section 3: AI story */}
+          <SectionCard
+            number={3}
+            icon={Wand2}
+            title="Your craft story (AI-assisted)"
+            subtitle="Speak or type a few notes — pick any language. AI will craft a beautiful first-person story."
+          >
+            <Field label="Shop name">
+              <Input
+                value={shopName}
+                onChange={(e) => setShopName(e.target.value)}
+                placeholder="e.g. Maya's Pottery Studio"
+              />
+            </Field>
+
+            <Field label="Story language">
+              <Select value={language} onValueChange={setLanguage}>
+                <SelectTrigger>
+                  <Globe2 className="h-4 w-4 text-muted-foreground mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {LANGUAGES.map((l) => (
+                    <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <Label>Your raw notes</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={speech.listening ? "destructive" : "outline"}
+                  onClick={toggleMic}
+                >
+                  {speech.listening ? (
+                    <><MicOff className="h-4 w-4" /> Stop</>
+                  ) : (
+                    <><Mic className="h-4 w-4" /> Speak</>
+                  )}
+                </Button>
+              </div>
+              <Textarea
+                rows={4}
+                value={liveNotes}
+                onChange={(e) => {
+                  setRawNotes(e.target.value);
+                  speech.setExternalText(e.target.value);
+                }}
+                placeholder="Tell us about your craft, materials, inspiration, heritage… in any language."
+              />
+              {speech.listening && (
+                <p className="text-xs text-primary mt-1 flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                  Listening in {LANGUAGES.find((l) => l.code === language)?.label}…
+                </p>
+              )}
+              {speech.error && <p className="text-xs text-destructive mt-1">{speech.error}</p>}
+              {!speech.supported && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Voice input requires Chrome or Edge. You can type instead.
+                </p>
+              )}
+            </div>
+
+            <Button
+              type="button"
+              onClick={generateStory}
+              disabled={generatingStory}
+              className="w-full"
+              variant="secondary"
+              size="lg"
+            >
+              {generatingStory ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Crafting your story…</>
+              ) : (
+                <><Sparkles className="h-4 w-4" /> Generate my story with AI</>
+              )}
+            </Button>
+
+            {aiStory && (
+              <div className="rounded-xl border bg-gradient-to-br from-primary/5 to-transparent p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-primary" />
+                    Your story (editable)
+                  </Label>
+                  <span className="text-xs text-muted-foreground">{aiStory.split(/\s+/).length} words</span>
+                </div>
+                <Textarea
+                  rows={7}
+                  value={aiStory}
+                  onChange={(e) => setAiStory(e.target.value)}
+                  className="bg-card"
+                />
+              </div>
             )}
-            {step < 3 ? (
-              <Button onClick={goNext}>Continue</Button>
-            ) : (
-              <Button onClick={submit} disabled={submitting}>
-                {submitting ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Submitting…</>
-                ) : (
-                  <><Upload className="h-4 w-4" /> Submit for review</>
-                )}
-              </Button>
-            )}
+          </SectionCard>
+
+          {/* Submit */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border bg-card p-5">
+            <p className="text-sm text-muted-foreground">
+              An admin will review your application and notify you when your shop is approved.
+            </p>
+            <Button type="submit" size="lg" disabled={submitting} className="w-full sm:w-auto">
+              {submitting ? <><Loader2 className="h-4 w-4 animate-spin" /> Submitting…</> : "Submit for review"}
+            </Button>
           </div>
-        </Card>
 
-        <p className="text-center mt-4 text-sm text-muted-foreground">
-          Already have an account?{" "}
-          <Link to="/login" className="text-primary hover:underline">Login here</Link>
-        </p>
+          <p className="text-center text-sm text-muted-foreground">
+            Already an artisan? <Link to="/login" className="text-primary hover:underline">Sign in</Link>
+          </p>
+        </form>
       </div>
     </div>
   );
 };
 
-const FileDrop = ({
+/* ---------- helpers ---------- */
+
+const SectionCard = ({
+  number, icon: Icon, title, subtitle, children,
+}: {
+  number: number;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+}) => (
+  <Card className="p-6 md:p-8">
+    <div className="flex items-start gap-4 mb-6">
+      <div className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold shrink-0">
+        {number}
+      </div>
+      <div className="flex-1">
+        <h2 className="text-lg md:text-xl font-display font-semibold flex items-center gap-2">
+          <Icon className="h-5 w-5 text-primary" />
+          {title}
+        </h2>
+        <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
+      </div>
+    </div>
+    <div className="space-y-4">{children}</div>
+  </Card>
+);
+
+const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <div>
+    <Label className="mb-1.5 block">{label}</Label>
+    {children}
+  </div>
+);
+
+const IconInput = ({
+  Icon, value, onChange, placeholder, type = "text",
+}: {
+  Icon: React.ComponentType<{ className?: string }>;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  type?: string;
+}) => (
+  <div className="relative">
+    <Icon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    <Input
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="pl-10"
+      placeholder={placeholder}
+    />
+  </div>
+);
+
+const PhotoCard = ({
   label, hint, Icon, file, accept, onFile,
 }: {
   label: string;
@@ -474,27 +517,58 @@ const FileDrop = ({
   file: File | null;
   accept: string;
   onFile: (f: File | null) => void;
-}) => (
-  <div>
-    <Label>{label}</Label>
-    <label className="mt-1.5 flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-6 cursor-pointer hover:bg-muted/40 transition-colors">
-      <Icon className="h-8 w-8 text-muted-foreground" />
-      {file ? (
-        <div className="text-sm text-foreground font-medium">{file.name}</div>
-      ) : (
-        <>
-          <div className="text-sm font-medium">Click to upload</div>
-          <div className="text-xs text-muted-foreground">{hint}</div>
-        </>
+  preview?: boolean;
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const isImage = file?.type.startsWith("image/");
+  const previewUrl = useMemo(
+    () => (file && isImage ? URL.createObjectURL(file) : null),
+    [file, isImage],
+  );
+
+  return (
+    <div>
+      <Label className="mb-1.5 block">{label}</Label>
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        className="group relative w-full aspect-[4/3] rounded-xl border-2 border-dashed border-border bg-muted/30 hover:border-primary hover:bg-primary/5 transition-colors overflow-hidden flex flex-col items-center justify-center"
+      >
+        {previewUrl ? (
+          <img src={previewUrl} alt={label} className="w-full h-full object-cover" />
+        ) : file ? (
+          <div className="flex flex-col items-center gap-2">
+            <FileCheck2 className="h-8 w-8 text-primary" />
+            <span className="text-sm font-medium">{file.name}</span>
+          </div>
+        ) : (
+          <>
+            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+              <Icon className="h-6 w-6 text-primary" />
+            </div>
+            <span className="text-sm font-medium">Click to upload</span>
+            <span className="text-xs text-muted-foreground mt-0.5">{hint}</span>
+          </>
+        )}
+      </button>
+      {file && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onFile(null); }}
+          className="mt-2 text-xs text-destructive hover:underline inline-flex items-center gap-1"
+        >
+          <Trash2 className="h-3 w-3" /> Remove
+        </button>
       )}
       <input
+        ref={inputRef}
         type="file"
         accept={accept}
         className="hidden"
         onChange={(e) => onFile(e.target.files?.[0] ?? null)}
       />
-    </label>
-  </div>
-);
+    </div>
+  );
+};
 
 export default ArtistSignup;

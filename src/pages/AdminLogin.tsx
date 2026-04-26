@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,11 +10,27 @@ import { supabase } from "@/integrations/supabase/client";
 const AdminLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("admin@example.com");
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState("Admin@123");
   const [loading, setLoading] = useState(false);
+  const [seeded, setSeeded] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // One-time idempotent seed of the default admin account
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        await supabase.functions.invoke("seed-admin");
+      } catch (e) {
+        console.error("admin seed failed", e);
+      } finally {
+        if (!cancelled) setSeeded(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +78,15 @@ const AdminLogin = () => {
         <p className="text-center text-muted-foreground mt-2 text-sm">
           Restricted access. Authorized administrators only.
         </p>
+
+        <div className="mt-5 rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs">
+          <p className="font-semibold text-foreground">Default admin credentials</p>
+          <p className="text-muted-foreground mt-0.5">
+            Email: <span className="font-mono">admin@example.com</span><br/>
+            Password: <span className="font-mono">Admin@123</span>
+          </p>
+          {!seeded && <p className="text-muted-foreground mt-1 italic">Preparing admin account…</p>}
+        </div>
 
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
           <div>
