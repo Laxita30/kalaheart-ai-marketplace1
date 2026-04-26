@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
-import { LayoutDashboard, Package, Users, ShoppingBag, Palette, ScrollText, ClipboardCheck } from "lucide-react";
+import { LayoutDashboard, Package, Users, ShoppingBag, Palette, ScrollText, ClipboardCheck, Sparkles } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import Navbar from "@/components/Navbar";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -12,6 +12,7 @@ const items = [
   { title: "Applications", url: "/admin/artists/review", icon: ClipboardCheck },
   { title: "Products", url: "/admin/products", icon: Package },
   { title: "Orders", url: "/admin/orders", icon: ShoppingBag },
+  { title: "Recommendations", url: "/admin/recommendations", icon: Sparkles },
   { title: "Audit log", url: "/admin/audit", icon: ScrollText },
 ];
 
