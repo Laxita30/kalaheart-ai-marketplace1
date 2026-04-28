@@ -1,0 +1,1 @@
+ALTER TABLE public.artists DROP CONSTRAINT IF EXISTS artists_user_id_fkey;
