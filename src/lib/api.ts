@@ -96,6 +96,50 @@ export async function getProduct(id: string) {
   return data;
 }
 
+export async function placeOrder(shippingAddress: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Must be logged in");
+
+  const items = await getCartItems();
+  if (items.length === 0) throw new Error("Cart is empty");
+
+  const total = items.reduce(
+    (sum: number, it: any) => sum + Number(it.products?.price || 0) * it.quantity,
+    0,
+  );
+
+  const { data: order, error: orderErr } = await supabase
+    .from("orders")
+    .insert({
+      user_id: user.id,
+      total_price: total,
+      status: "pending",
+      shipping_address: shippingAddress,
+    })
+    .select()
+    .single();
+  if (orderErr) throw orderErr;
+
+  const orderItems = items.map((it: any) => ({
+    order_id: order.id,
+    product_id: it.product_id,
+    quantity: it.quantity,
+    price: Number(it.products?.price || 0),
+  }));
+  const { error: itemsErr } = await supabase.from("order_items").insert(orderItems);
+  if (itemsErr) throw itemsErr;
+
+  // Clear cart
+  await supabase.from("cart_items").delete().eq("user_id", user.id);
+
+  // Conversion analytics best-effort
+  for (const it of items) {
+    await logRecConversion(it.product_id, "purchase").catch(() => {});
+  }
+
+  return order;
+}
+
 // ============ Artist Dashboard APIs ============
 
 export async function getMyArtist() {

@@ -9,7 +9,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages } = await req.json();
+    const { messages, language } = await req.json();
     if (!messages || !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: "messages array is required" }), {
         status: 400,
@@ -32,6 +32,8 @@ serve(async (req) => {
           {
             role: "system",
             content: `You are KalaBot, the friendly AI assistant for KalaHeart — an artisan marketplace connecting local artists with art lovers worldwide.
+
+IMPORTANT LANGUAGE RULE: You MUST reply in **${language || "English"}** regardless of the language the user writes in. Use natural, fluent ${language || "English"}. If the user writes in another language, still reply in ${language || "English"}.
 
 You help with:
 - **Users**: Finding products, tracking orders, product recommendations, answering questions about artisan crafts

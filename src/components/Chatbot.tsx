@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Sparkles } from "lucide-react";
+import { MessageCircle, X, Send, Sparkles, Globe2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ReactMarkdown from "react-markdown";
@@ -8,13 +8,34 @@ type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
+const LANGUAGES = [
+  { code: "English", label: "English", greeting: "Hi! I'm KalaBot 👋 Ask me anything about handmade products and artisans." },
+  { code: "Hindi", label: "हिन्दी (Hindi)", greeting: "नमस्ते! मैं कलाबॉट हूँ 👋 हस्तनिर्मित कलाकृतियों के बारे में पूछें।" },
+  { code: "Bengali", label: "বাংলা (Bengali)", greeting: "নমস্কার! আমি কলাবট 👋 হস্তনির্মিত শিল্প সম্পর্কে জিজ্ঞাসা করুন।" },
+  { code: "Tamil", label: "தமிழ் (Tamil)", greeting: "வணக்கம்! நான் கலாபாட் 👋 கைவினை கலை பற்றி கேளுங்கள்." },
+  { code: "Telugu", label: "తెలుగు (Telugu)", greeting: "నమస్కారం! నేను కళాబాట్ 👋" },
+  { code: "Marathi", label: "मराठी (Marathi)", greeting: "नमस्कार! मी कलाबॉट 👋" },
+  { code: "Gujarati", label: "ગુજરાતી (Gujarati)", greeting: "નમસ્તે! હું કલાબોટ 👋" },
+  { code: "Kannada", label: "ಕನ್ನಡ (Kannada)", greeting: "ನಮಸ್ಕಾರ! ನಾನು ಕಲಾಬಾಟ್ 👋" },
+  { code: "Punjabi", label: "ਪੰਜਾਬੀ (Punjabi)", greeting: "ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਕਲਾਬੋਟ ਹਾਂ 👋" },
+  { code: "Malayalam", label: "മലയാളം (Malayalam)", greeting: "നമസ്കാരം! ഞാൻ കലാബോട്ട് 👋" },
+  { code: "Spanish", label: "Español", greeting: "¡Hola! Soy KalaBot 👋 Pregúntame sobre arte hecho a mano." },
+  { code: "French", label: "Français", greeting: "Bonjour! Je suis KalaBot 👋 Demandez-moi tout sur l'art artisanal." },
+  { code: "German", label: "Deutsch", greeting: "Hallo! Ich bin KalaBot 👋 Frag mich alles über Kunsthandwerk." },
+  { code: "Arabic", label: "العربية", greeting: "مرحباً! أنا كالا بوت 👋 اسألني عن الفنون اليدوية." },
+  { code: "Chinese", label: "中文", greeting: "你好！我是 KalaBot 👋 向我询问关于手工艺品的任何问题。" },
+  { code: "Japanese", label: "日本語", greeting: "こんにちは！カラボットです 👋 手作りアートについて何でも聞いてください。" },
+];
+
 async function streamChat({
   messages,
+  language,
   onDelta,
   onDone,
   onError,
 }: {
   messages: Msg[];
+  language: string;
   onDelta: (text: string) => void;
   onDone: () => void;
   onError: (msg: string) => void;
@@ -25,7 +46,7 @@ async function streamChat({
       "Content-Type": "application/json",
       Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
     },
-    body: JSON.stringify({ messages }),
+    body: JSON.stringify({ messages, language }),
   });
 
   if (!resp.ok) {
@@ -69,6 +90,7 @@ async function streamChat({
 
 const Chatbot = () => {
   const [open, setOpen] = useState(false);
+  const [language, setLanguage] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -79,7 +101,7 @@ const Chatbot = () => {
   }, [messages]);
 
   const send = async () => {
-    if (!input.trim() || loading) return;
+    if (!input.trim() || loading || !language) return;
     const userMsg: Msg = { role: "user", content: input.trim() };
     const allMessages = [...messages, userMsg];
     setMessages(allMessages);
@@ -100,6 +122,7 @@ const Chatbot = () => {
 
     await streamChat({
       messages: allMessages,
+      language,
       onDelta: upsertAssistant,
       onDone: () => setLoading(false),
       onError: (msg) => {
@@ -107,6 +130,16 @@ const Chatbot = () => {
         setLoading(false);
       },
     });
+  };
+
+  const pickLanguage = (lang: typeof LANGUAGES[number]) => {
+    setLanguage(lang.code);
+    setMessages([{ role: "assistant", content: lang.greeting }]);
+  };
+
+  const resetLanguage = () => {
+    setLanguage(null);
+    setMessages([]);
   };
 
   return (
@@ -129,12 +162,42 @@ const Chatbot = () => {
             <div className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
               <span className="font-semibold text-sm">KalaBot</span>
+              {language && (
+                <button
+                  onClick={resetLanguage}
+                  className="ml-2 text-xs opacity-90 hover:opacity-100 underline-offset-2 hover:underline flex items-center gap-1"
+                >
+                  <Globe2 className="h-3 w-3" /> {language}
+                </button>
+              )}
             </div>
             <button onClick={() => setOpen(false)} className="hover:opacity-80">
               <X className="h-4 w-4" />
             </button>
           </div>
 
+          {/* Language picker */}
+          {!language ? (
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="text-center mb-4">
+                <Globe2 className="h-8 w-8 mx-auto mb-2 text-primary" />
+                <p className="font-medium text-sm">Choose your language</p>
+                <p className="text-xs text-muted-foreground mt-1">KalaBot will chat with you in this language.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {LANGUAGES.map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => pickLanguage(l)}
+                    className="text-left text-xs rounded-lg border bg-card hover:bg-accent hover:border-primary transition-colors px-3 py-2"
+                  >
+                    {l.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <>
           {/* Messages */}
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.length === 0 && (
@@ -190,6 +253,8 @@ const Chatbot = () => {
               </Button>
             </form>
           </div>
+            </>
+          )}
         </div>
       )}
     </>

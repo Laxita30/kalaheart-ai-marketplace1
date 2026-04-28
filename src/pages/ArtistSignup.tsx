@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Mail, Lock, Eye, EyeOff, User, Phone, MapPin, Palette,
   Mic, MicOff, Sparkles, Image as ImageIcon, FileCheck2, Check, X,
-  Loader2, Camera, IdCard, Globe2, Wand2, Trash2,
+  Loader2, Camera, IdCard, Globe2, Wand2, Trash2, Plus, Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +62,7 @@ const ArtistSignup = () => {
   // Uploads
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
   const [idProof, setIdProof] = useState<File | null>(null);
+  const [productPhotos, setProductPhotos] = useState<File[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -163,6 +164,10 @@ const ArtistSignup = () => {
       toast({ title: "Add an ID proof image", variant: "destructive" });
       return false;
     }
+    if (productPhotos.length === 0) {
+      toast({ title: "Add at least one product photo", description: "Upload photos of items you'll sell.", variant: "destructive" });
+      return false;
+    }
     return true;
   };
 
@@ -195,7 +200,7 @@ const ArtistSignup = () => {
       const photoUrl = await uploadFile("artist-photos", user.id, profilePhoto!);
 
       const langLabel = LANGUAGES.find((l) => l.code === language)?.label ?? "English";
-      const { error: insertErr } = await supabase.from("artists").insert({
+      const { data: artistRow, error: insertErr } = await supabase.from("artists").insert({
         user_id: user.id,
         shop_name: shopName,
         description: aiStory,
@@ -206,8 +211,28 @@ const ArtistSignup = () => {
         approved: false,
         review_status: "pending",
         submitted_at: new Date().toISOString(),
-      } as any);
+      } as any).select().single();
       if (insertErr) throw insertErr;
+
+      // Upload product photos and create draft products
+      const productImageUrls: string[] = [];
+      for (const file of productPhotos) {
+        const url = await uploadFile("product-photos", user.id, file);
+        productImageUrls.push(url as string);
+      }
+      if (artistRow && productImageUrls.length > 0) {
+        const drafts = productImageUrls.map((url, i) => ({
+          artist_id: artistRow.id,
+          title: `Untitled product ${i + 1}`,
+          description: "Pending artist details",
+          price: 0,
+          category: "Other",
+          images: [url],
+          stock: 0,
+          is_active: false,
+        }));
+        await supabase.from("products").insert(drafts);
+      }
 
       toast({
         title: "Submitted for review!",
@@ -331,9 +356,19 @@ const ArtistSignup = () => {
             </div>
           </SectionCard>
 
-          {/* Section 3: AI story */}
+          {/* Section 2b: Product photos */}
           <SectionCard
             number={3}
+            icon={Package}
+            title="Photos of your products"
+            subtitle="Upload one or more photos of items you'll sell. You can add details later."
+          >
+            <ProductPhotoGrid files={productPhotos} onChange={setProductPhotos} />
+          </SectionCard>
+
+          {/* Section 3: AI story */}
+          <SectionCard
+            number={4}
             icon={Wand2}
             title="Your craft story (AI-assisted)"
             subtitle="Speak or type a few notes — pick any language. AI will craft a beautiful first-person story."
@@ -567,6 +602,60 @@ const PhotoCard = ({
         className="hidden"
         onChange={(e) => onFile(e.target.files?.[0] ?? null)}
       />
+    </div>
+  );
+};
+
+const ProductPhotoGrid = ({
+  files, onChange,
+}: {
+  files: File[];
+  onChange: (files: File[]) => void;
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const previews = useMemo(
+    () => files.map((f) => ({ name: f.name, url: URL.createObjectURL(f) })),
+    [files],
+  );
+  return (
+    <div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        {previews.map((p, i) => (
+          <div key={i} className="relative aspect-square rounded-lg overflow-hidden border bg-muted">
+            <img src={p.url} alt={p.name} className="w-full h-full object-cover" />
+            <button
+              type="button"
+              onClick={() => onChange(files.filter((_, idx) => idx !== i))}
+              className="absolute top-1.5 right-1.5 h-7 w-7 rounded-full bg-card/90 text-destructive flex items-center justify-center hover:bg-card"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="aspect-square rounded-lg border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-colors flex flex-col items-center justify-center text-muted-foreground hover:text-primary"
+        >
+          <Plus className="h-6 w-6 mb-1" />
+          <span className="text-xs font-medium">Add photo</span>
+        </button>
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          const newFiles = Array.from(e.target.files ?? []);
+          onChange([...files, ...newFiles]);
+          if (inputRef.current) inputRef.current.value = "";
+        }}
+      />
+      {files.length > 0 && (
+        <p className="text-xs text-muted-foreground mt-2">{files.length} photo{files.length > 1 ? "s" : ""} selected</p>
+      )}
     </div>
   );
 };
