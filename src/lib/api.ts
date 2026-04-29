@@ -128,6 +128,19 @@ export async function placeOrder(shippingAddress: string) {
   const items = await getCartItems();
   if (items.length === 0) throw new Error("Cart is empty");
 
+  // Validate stock for every line item before charging the user
+  for (const it of items as any[]) {
+    const stock = Number(it.products?.stock ?? 0);
+    if (stock > 0 && it.quantity > stock) {
+      throw new Error(
+        `${it.products?.title ?? "An item"} only has ${stock} in stock`,
+      );
+    }
+    if (stock === 0) {
+      throw new Error(`${it.products?.title ?? "An item"} is out of stock`);
+    }
+  }
+
   const total = items.reduce(
     (sum: number, it: any) => sum + Number(it.products?.price || 0) * it.quantity,
     0,
