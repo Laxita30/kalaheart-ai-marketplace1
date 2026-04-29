@@ -40,6 +40,31 @@ export async function getCartItems() {
   return data || [];
 }
 
+export async function updateCartQuantity(productId: string, quantity: number) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Must be logged in");
+  if (quantity <= 0) {
+    return removeFromCart(productId);
+  }
+  // Validate stock
+  const { data: product, error: pErr } = await supabase
+    .from("products")
+    .select("stock")
+    .eq("id", productId)
+    .maybeSingle();
+  if (pErr) throw pErr;
+  const stock = Number(product?.stock ?? 0);
+  if (stock > 0 && quantity > stock) {
+    throw new Error(`Only ${stock} in stock`);
+  }
+  const { error } = await supabase
+    .from("cart_items")
+    .update({ quantity })
+    .eq("user_id", user.id)
+    .eq("product_id", productId);
+  if (error) throw error;
+}
+
 export async function toggleWishlist(productId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Must be logged in");
