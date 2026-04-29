@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ShoppingCart, Trash2, Loader2, MapPin } from "lucide-react";
+import { ShoppingCart, Trash2, Loader2, MapPin, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { getCartItems, removeFromCart, placeOrder } from "@/lib/api";
+import { getCartItems, removeFromCart, placeOrder, updateCartQuantity } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 
 const Cart = () => {
@@ -45,11 +45,41 @@ const Cart = () => {
     toast({ title: "Removed from cart" });
   };
 
+  const changeQty = async (productId: string, nextQty: number) => {
+    const item = items.find((i) => i.product_id === productId);
+    if (!item) return;
+    if (nextQty <= 0) return remove(productId);
+    const stock = Number(item.products?.stock ?? 0);
+    if (stock > 0 && nextQty > stock) {
+      toast({ title: `Only ${stock} in stock`, variant: "destructive" });
+      return;
+    }
+    // Optimistic update
+    const prev = items;
+    setItems((cur) =>
+      cur.map((i) => (i.product_id === productId ? { ...i, quantity: nextQty } : i)),
+    );
+    try {
+      await updateCartQuantity(productId, nextQty);
+    } catch (e: any) {
+      setItems(prev);
+      toast({ title: "Could not update", description: e.message, variant: "destructive" });
+    }
+  };
+
   const total = items.reduce((s, i) => s + Number(i.products?.price || 0) * i.quantity, 0);
+  const hasStockIssue = items.some((i) => {
+    const stock = Number(i.products?.stock ?? 0);
+    return stock === 0 || (stock > 0 && i.quantity > stock);
+  });
 
   const handlePlace = async () => {
     if (!address.trim()) {
       toast({ title: "Add a shipping address", variant: "destructive" });
+      return;
+    }
+    if (hasStockIssue) {
+      toast({ title: "Some items are out of stock", description: "Please adjust quantities before checkout.", variant: "destructive" });
       return;
     }
     setPlacing(true);
@@ -105,7 +135,39 @@ const Cart = () => {
                     <Link to={`/product/${item.product_id}`} className="font-semibold hover:text-primary">
                       {item.products?.title}
                     </Link>
-                    <p className="text-sm text-muted-foreground mt-1">Qty: {item.quantity}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="h-7 w-7"
+                        onClick={() => changeQty(item.product_id, item.quantity - 1)}
+                        aria-label="Decrease quantity"
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </Button>
+                      <span className="min-w-6 text-center text-sm font-medium">{item.quantity}</span>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="h-7 w-7"
+                        onClick={() => changeQty(item.product_id, item.quantity + 1)}
+                        disabled={
+                          Number(item.products?.stock ?? 0) > 0 &&
+                          item.quantity >= Number(item.products?.stock ?? 0)
+                        }
+                        aria-label="Increase quantity"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </Button>
+                      {Number(item.products?.stock ?? 0) > 0 && (
+                        <span className="text-xs text-muted-foreground ml-1">
+                          {item.products?.stock} in stock
+                        </span>
+                      )}
+                      {Number(item.products?.stock ?? 0) === 0 && (
+                        <span className="text-xs text-destructive ml-1">Out of stock</span>
+                      )}
+                    </div>
                     <p className="text-price font-bold mt-2">
                       {item.products?.currency}{(Number(item.products?.price || 0) * item.quantity).toFixed(2)}
                     </p>
@@ -132,9 +194,14 @@ const Cart = () => {
                   <Input value={address} onChange={(e) => setAddress(e.target.value)} className="pl-10" placeholder="Where to deliver?" />
                 </div>
               </div>
-              <Button className="w-full" size="lg" onClick={handlePlace} disabled={placing}>
+              <Button className="w-full" size="lg" onClick={handlePlace} disabled={placing || hasStockIssue}>
                 {placing ? <><Loader2 className="h-4 w-4 animate-spin" /> Placing…</> : "Place order"}
               </Button>
+              {hasStockIssue && (
+                <p className="text-xs text-destructive text-center">
+                  Adjust quantities — some items exceed available stock.
+                </p>
+              )}
             </Card>
           </div>
         )}
