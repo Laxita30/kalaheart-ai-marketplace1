@@ -238,7 +238,7 @@ const ArtistSignup = () => {
         title: "Submitted for review!",
         description: "An admin will review your shop shortly.",
       });
-      navigate("/artist");
+      navigate("/artist/pending");
     } catch (e: any) {
       toast({ title: "Submission failed", description: e.message, variant: "destructive" });
     } finally {
