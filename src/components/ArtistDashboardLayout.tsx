@@ -1,9 +1,10 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Package, ShoppingBag, BarChart3, Store, LogOut, ArrowLeft } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const nav = [
   { to: "/artist", label: "Overview", icon: LayoutDashboard, end: true },
@@ -15,8 +16,41 @@ const nav = [
 
 const ArtistDashboardLayout = ({ children, title }: { children: ReactNode; title: string }) => {
   const { pathname } = useLocation();
-  const { signOut } = useAuth();
+  const { signOut, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      navigate("/login", { replace: true });
+      return;
+    }
+    (async () => {
+      const { data } = await supabase
+        .from("artists")
+        .select("review_status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!data) {
+        navigate("/artist/signup", { replace: true });
+        return;
+      }
+      if ((data as any).review_status !== "approved") {
+        navigate("/artist/pending", { replace: true });
+        return;
+      }
+      setChecking(false);
+    })();
+  }, [user, authLoading, navigate]);
+
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+        Loading your dashboard…
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex">
