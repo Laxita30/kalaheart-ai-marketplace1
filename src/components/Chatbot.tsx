@@ -3,6 +3,8 @@ import { MessageCircle, X, Send, Sparkles, Globe2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ReactMarkdown from "react-markdown";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -94,7 +96,9 @@ const Chatbot = () => {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight);
@@ -107,6 +111,29 @@ const Chatbot = () => {
     setMessages(allMessages);
     setInput("");
     setLoading(true);
+
+    // Ensure a conversation exists (only persist for signed-in users)
+    let convoId = conversationId;
+    if (user && !convoId) {
+      const { data } = await supabase
+        .from("ai_conversations")
+        .insert({ user_id: user.id, language, title: userMsg.content.slice(0, 80) })
+        .select("id")
+        .single();
+      if (data?.id) {
+        convoId = data.id;
+        setConversationId(convoId);
+      }
+    }
+    if (user && convoId) {
+      await supabase.from("ai_messages").insert({
+        conversation_id: convoId,
+        user_id: user.id,
+        role: "user",
+        content: userMsg.content,
+        language,
+      });
+    }
 
     let assistantSoFar = "";
     const upsertAssistant = (chunk: string) => {
@@ -124,7 +151,22 @@ const Chatbot = () => {
       messages: allMessages,
       language,
       onDelta: upsertAssistant,
-      onDone: () => setLoading(false),
+      onDone: async () => {
+        setLoading(false);
+        if (user && convoId && assistantSoFar.trim()) {
+          await supabase.from("ai_messages").insert({
+            conversation_id: convoId,
+            user_id: user.id,
+            role: "assistant",
+            content: assistantSoFar,
+            language,
+          });
+          await supabase
+            .from("ai_conversations")
+            .update({ updated_at: new Date().toISOString() })
+            .eq("id", convoId);
+        }
+      },
       onError: (msg) => {
         setMessages((prev) => [...prev, { role: "assistant", content: `Sorry, something went wrong: ${msg}` }]);
         setLoading(false);
@@ -135,11 +177,13 @@ const Chatbot = () => {
   const pickLanguage = (lang: typeof LANGUAGES[number]) => {
     setLanguage(lang.code);
     setMessages([{ role: "assistant", content: lang.greeting }]);
+    setConversationId(null);
   };
 
   const resetLanguage = () => {
     setLanguage(null);
     setMessages([]);
+    setConversationId(null);
   };
 
   return (
