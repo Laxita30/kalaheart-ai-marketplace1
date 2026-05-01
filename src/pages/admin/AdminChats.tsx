@@ -1,0 +1,188 @@
+import { useEffect, useState } from "react";
+import AdminLayout from "@/components/AdminLayout";
+import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { MessageSquare, Sparkles, User as UserIcon, Bot } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+
+type Convo = {
+  id: string;
+  user_id: string | null;
+  language: string | null;
+  title: string | null;
+  updated_at: string;
+};
+
+type AiMsg = {
+  id: string;
+  role: string;
+  content: string;
+  created_at: string;
+};
+
+type Thread = {
+  id: string;
+  user_id: string;
+  artist_user_id: string;
+  last_message_at: string;
+};
+
+type DmMsg = {
+  id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+};
+
+const AdminChats = () => {
+  const [convos, setConvos] = useState<Convo[]>([]);
+  const [selectedConvo, setSelectedConvo] = useState<string | null>(null);
+  const [aiMsgs, setAiMsgs] = useState<AiMsg[]>([]);
+
+  const [threads, setThreads] = useState<Thread[]>([]);
+  const [selectedThread, setSelectedThread] = useState<string | null>(null);
+  const [dmMsgs, setDmMsgs] = useState<DmMsg[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("ai_conversations")
+      .select("*")
+      .order("updated_at", { ascending: false })
+      .limit(200)
+      .then(({ data }) => setConvos((data ?? []) as Convo[]));
+    supabase
+      .from("chat_threads")
+      .select("*")
+      .order("last_message_at", { ascending: false })
+      .limit(200)
+      .then(({ data }) => setThreads((data ?? []) as Thread[]));
+  }, []);
+
+  useEffect(() => {
+    if (!selectedConvo) return;
+    supabase
+      .from("ai_messages")
+      .select("id, role, content, created_at")
+      .eq("conversation_id", selectedConvo)
+      .order("created_at", { ascending: true })
+      .then(({ data }) => setAiMsgs((data ?? []) as AiMsg[]));
+  }, [selectedConvo]);
+
+  useEffect(() => {
+    if (!selectedThread) return;
+    supabase
+      .from("chat_messages")
+      .select("id, sender_id, content, created_at")
+      .eq("thread_id", selectedThread)
+      .order("created_at", { ascending: true })
+      .then(({ data }) => setDmMsgs((data ?? []) as DmMsg[]));
+  }, [selectedThread]);
+
+  return (
+    <AdminLayout title="Chat oversight">
+      <p className="text-sm text-muted-foreground mb-4">
+        Review AI assistant conversations and direct chats between users and artists.
+      </p>
+      <Tabs defaultValue="ai">
+        <TabsList>
+          <TabsTrigger value="ai" className="gap-1.5">
+            <Sparkles className="h-4 w-4" /> AI chats ({convos.length})
+          </TabsTrigger>
+          <TabsTrigger value="dm" className="gap-1.5">
+            <MessageSquare className="h-4 w-4" /> User ↔ Artist ({threads.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="ai">
+          <div className="grid md:grid-cols-[300px_1fr] gap-4 mt-4">
+            <Card className="p-2 max-h-[70vh] overflow-y-auto">
+              {convos.length === 0 && (
+                <p className="text-sm text-muted-foreground p-4 text-center">No AI conversations yet.</p>
+              )}
+              {convos.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setSelectedConvo(c.id)}
+                  className={`w-full text-left rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors ${
+                    selectedConvo === c.id ? "bg-accent" : ""
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate font-medium">{c.title || "Untitled"}</span>
+                    {c.language && <Badge variant="outline" className="text-[10px]">{c.language}</Badge>}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    {formatDistanceToNow(new Date(c.updated_at), { addSuffix: true })}
+                  </div>
+                </button>
+              ))}
+            </Card>
+            <Card className="p-4 max-h-[70vh] overflow-y-auto space-y-3">
+              {!selectedConvo && (
+                <p className="text-sm text-muted-foreground text-center py-12">Select a conversation to inspect.</p>
+              )}
+              {aiMsgs.map((m) => (
+                <div key={m.id} className={`flex gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                  {m.role !== "user" && <Bot className="h-4 w-4 text-primary mt-2" />}
+                  <div className={`max-w-[80%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${
+                    m.role === "user" ? "bg-primary text-primary-foreground" : "bg-secondary"
+                  }`}>
+                    {m.content}
+                    <div className="text-[10px] opacity-70 mt-1">
+                      {new Date(m.created_at).toLocaleString()}
+                    </div>
+                  </div>
+                  {m.role === "user" && <UserIcon className="h-4 w-4 text-muted-foreground mt-2" />}
+                </div>
+              ))}
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="dm">
+          <div className="grid md:grid-cols-[300px_1fr] gap-4 mt-4">
+            <Card className="p-2 max-h-[70vh] overflow-y-auto">
+              {threads.length === 0 && (
+                <p className="text-sm text-muted-foreground p-4 text-center">No direct chats yet.</p>
+              )}
+              {threads.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setSelectedThread(t.id)}
+                  className={`w-full text-left rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors ${
+                    selectedThread === t.id ? "bg-accent" : ""
+                  }`}
+                >
+                  <div className="font-medium truncate">User ↔ Artist</div>
+                  <div className="text-xs text-muted-foreground mt-0.5 font-mono truncate">
+                    {t.user_id.slice(0, 8)}… ↔ {t.artist_user_id.slice(0, 8)}…
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    {formatDistanceToNow(new Date(t.last_message_at), { addSuffix: true })}
+                  </div>
+                </button>
+              ))}
+            </Card>
+            <Card className="p-4 max-h-[70vh] overflow-y-auto space-y-3">
+              {!selectedThread && (
+                <p className="text-sm text-muted-foreground text-center py-12">Select a thread to inspect.</p>
+              )}
+              {dmMsgs.map((m) => (
+                <div key={m.id} className="rounded-xl border bg-card px-3 py-2 text-sm">
+                  <div className="font-mono text-[10px] text-muted-foreground mb-1">
+                    sender: {m.sender_id.slice(0, 8)}… · {new Date(m.created_at).toLocaleString()}
+                  </div>
+                  <div className="whitespace-pre-wrap">{m.content}</div>
+                </div>
+              ))}
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </AdminLayout>
+  );
+};
+
+export default AdminChats;
