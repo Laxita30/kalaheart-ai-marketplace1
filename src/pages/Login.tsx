@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -19,12 +20,42 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     const { error } = await signIn(email, password);
-    setLoading(false);
     if (error) {
+      setLoading(false);
       toast({ title: "Login failed", description: error.message, variant: "destructive" });
-    } else {
-      navigate("/browse");
+      return;
     }
+
+    // Route based on account type: admin → /admin, artist → dashboard or pending, else → /browse
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: roles } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id);
+        const isAdmin = (roles ?? []).some((r: any) => r.role === "admin");
+        if (isAdmin) {
+          setLoading(false);
+          navigate("/admin");
+          return;
+        }
+        const { data: artist } = await supabase
+          .from("artists")
+          .select("review_status")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (artist) {
+          setLoading(false);
+          navigate((artist as any).review_status === "approved" ? "/artist" : "/artist/pending");
+          return;
+        }
+      }
+    } catch {
+      // fall through to default
+    }
+    setLoading(false);
+    navigate("/browse");
   };
 
   return (
