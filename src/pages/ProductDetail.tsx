@@ -114,7 +114,18 @@ const ProductDetail = () => {
       toast({ title: "Artist unavailable", variant: "destructive" });
       return;
     }
-    navigate(`/chat/${artist.user_id}`);
+    navigate(`/chat/${artist.user_id}`, {
+      state: {
+        product: {
+          id: product.id,
+          title: product.title,
+          price: product.price,
+          currency: product.currency,
+          image: images[0],
+          url: `${window.location.origin}/product/${product.id}`,
+        },
+      },
+    });
   };
 
   return (

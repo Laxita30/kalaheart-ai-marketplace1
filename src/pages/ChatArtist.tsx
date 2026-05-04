@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { useParams, Navigate, useLocation } from "react-router-dom";
 import { Send, Loader2, ShieldAlert, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -15,6 +15,10 @@ type Msg = { id: string; sender_id: string; content: string; created_at: string 
 
 const ChatArtist = () => {
   const { artistUserId } = useParams();
+  const location = useLocation();
+  const prefillProduct = (location.state as any)?.product as
+    | { id: string; title: string; price: number; currency: string; image?: string; url: string }
+    | undefined;
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -24,6 +28,7 @@ const ChatArtist = () => {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [prefillApplied, setPrefillApplied] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -92,6 +97,19 @@ const ChatArtist = () => {
     };
   }, [threadId]);
 
+  // Pre-fill the message box with product context the first time the chat opens
+  useEffect(() => {
+    if (!prefillProduct || prefillApplied) return;
+    const draft =
+      `Hi! I'm interested in your product:\n` +
+      `• ${prefillProduct.title}\n` +
+      `• Price: ${prefillProduct.currency}${Number(prefillProduct.price).toFixed(2)}\n` +
+      `• Link: ${prefillProduct.url}\n\n` +
+      `Could you share more details?`;
+    setText((prev) => (prev ? prev : draft));
+    setPrefillApplied(true);
+  }, [prefillProduct, prefillApplied]);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [msgs]);
@@ -126,6 +144,26 @@ const ChatArtist = () => {
           <ArrowLeft className="h-4 w-4" /> Back
         </Link>
         <h1 className="text-2xl font-display font-bold">Chat with {artistName}</h1>
+
+        {prefillProduct && (
+          <div className="mt-3 flex items-center gap-3 rounded-md border bg-card p-3">
+            {prefillProduct.image && (
+              <img
+                src={prefillProduct.image}
+                alt={prefillProduct.title}
+                className="h-14 w-14 rounded-md object-cover border"
+              />
+            )}
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">About product</p>
+              <p className="text-sm font-medium truncate">{prefillProduct.title}</p>
+              <p className="text-sm text-price font-semibold">
+                {prefillProduct.currency}
+                {Number(prefillProduct.price).toFixed(2)}
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="mt-3 flex items-start gap-2 rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
           <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
