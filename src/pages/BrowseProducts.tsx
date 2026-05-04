@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, Heart, ShoppingCart, Star } from "lucide-react";
+import { Search, Heart, ShoppingCart, Star, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
@@ -114,6 +114,14 @@ const BrowseProducts = () => {
 
           <div>
             <h2 className="text-2xl font-display font-bold mb-6">Discover Unique Creations</h2>
+            <div className="mb-5 flex items-start gap-2 rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+              <Info className="h-3.5 w-3.5 mt-0.5 shrink-0 text-primary" />
+              <span>
+                Tip: click any product to open its dedicated details page at{" "}
+                <code className="px-1 py-0.5 rounded bg-background border text-foreground">/product/:id</code>{" "}
+                for full specs, reviews and to contact the artist.
+              </span>
+            </div>
             {loading ? (
               <p className="text-muted-foreground text-center py-12">Loading…</p>
             ) : filtered.length === 0 ? (
