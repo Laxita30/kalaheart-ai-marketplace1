@@ -419,13 +419,16 @@ export type Database = {
       products: {
         Row: {
           artist_id: string
+          care_instructions: string | null
           category: string
           created_at: string
           currency: string | null
           description: string | null
+          dimensions: string | null
           id: string
           images: string[] | null
           is_active: boolean | null
+          materials: string | null
           price: number
           rating: number | null
           review_count: number | null
@@ -435,13 +438,16 @@ export type Database = {
         }
         Insert: {
           artist_id: string
+          care_instructions?: string | null
           category: string
           created_at?: string
           currency?: string | null
           description?: string | null
+          dimensions?: string | null
           id?: string
           images?: string[] | null
           is_active?: boolean | null
+          materials?: string | null
           price: number
           rating?: number | null
           review_count?: number | null
@@ -451,13 +457,16 @@ export type Database = {
         }
         Update: {
           artist_id?: string
+          care_instructions?: string | null
           category?: string
           created_at?: string
           currency?: string | null
           description?: string | null
+          dimensions?: string | null
           id?: string
           images?: string[] | null
           is_active?: boolean | null
+          materials?: string | null
           price?: number
           rating?: number | null
           review_count?: number | null
