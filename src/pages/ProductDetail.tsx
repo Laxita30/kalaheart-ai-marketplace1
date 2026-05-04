@@ -12,6 +12,9 @@ import {
   ShieldCheck,
   Package,
   Tag,
+  Layers,
+  Ruler,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -192,6 +195,41 @@ const ProductDetail = () => {
             <p className="text-foreground/80 mt-5 leading-relaxed whitespace-pre-line">
               {product.description || "No description provided."}
             </p>
+
+            {(product.materials || product.dimensions || product.care_instructions) && (
+              <div className="mt-6 rounded-lg border bg-card/50 divide-y">
+                <h2 className="px-4 py-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                  Specifications
+                </h2>
+                {product.materials && (
+                  <div className="flex gap-3 px-4 py-3">
+                    <Layers className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                    <div className="text-sm">
+                      <p className="font-medium">Materials</p>
+                      <p className="text-muted-foreground mt-0.5 whitespace-pre-line">{product.materials}</p>
+                    </div>
+                  </div>
+                )}
+                {product.dimensions && (
+                  <div className="flex gap-3 px-4 py-3">
+                    <Ruler className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                    <div className="text-sm">
+                      <p className="font-medium">Dimensions</p>
+                      <p className="text-muted-foreground mt-0.5 whitespace-pre-line">{product.dimensions}</p>
+                    </div>
+                  </div>
+                )}
+                {product.care_instructions && (
+                  <div className="flex gap-3 px-4 py-3">
+                    <Sparkles className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                    <div className="text-sm">
+                      <p className="font-medium">Care instructions</p>
+                      <p className="text-muted-foreground mt-0.5 whitespace-pre-line">{product.care_instructions}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3 mt-6 text-sm">
               <div className="rounded-md border p-3">
