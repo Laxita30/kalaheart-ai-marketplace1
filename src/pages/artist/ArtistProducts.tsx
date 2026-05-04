@@ -15,7 +15,17 @@ import { useNavigate } from "react-router-dom";
 
 type Product = Awaited<ReturnType<typeof getMyProducts>>[number];
 
-const empty = { title: "", description: "", price: "", category: "", stock: "", images: "" };
+const empty = {
+  title: "",
+  description: "",
+  price: "",
+  category: "",
+  stock: "",
+  images: "",
+  materials: "",
+  dimensions: "",
+  care_instructions: "",
+};
 
 const ArtistProducts = () => {
   const [items, setItems] = useState<Product[]>([]);
@@ -44,6 +54,9 @@ const ArtistProducts = () => {
       category: p.category,
       stock: String(p.stock ?? 0),
       images: (p.images ?? []).join(", "),
+      materials: (p as any).materials ?? "",
+      dimensions: (p as any).dimensions ?? "",
+      care_instructions: (p as any).care_instructions ?? "",
     });
     setOpen(true);
   };
@@ -62,6 +75,9 @@ const ArtistProducts = () => {
         category: form.category,
         stock: Number(form.stock || 0),
         images: form.images.split(",").map((s) => s.trim()).filter(Boolean),
+        materials: form.materials,
+        dimensions: form.dimensions,
+        care_instructions: form.care_instructions,
       };
       if (editing) await updateProduct(editing.id, payload);
       else await createProduct(payload);
@@ -159,6 +175,21 @@ const ArtistProducts = () => {
               <Input placeholder="Stock" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
             </div>
             <Input placeholder="Category (e.g. Pottery)" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+            <Input
+              placeholder="Materials (e.g. Terracotta clay, natural dyes)"
+              value={form.materials}
+              onChange={(e) => setForm({ ...form, materials: e.target.value })}
+            />
+            <Input
+              placeholder='Dimensions (e.g. 12" H x 8" W x 8" D)'
+              value={form.dimensions}
+              onChange={(e) => setForm({ ...form, dimensions: e.target.value })}
+            />
+            <Textarea
+              placeholder="Care instructions (e.g. Hand wash with mild soap, avoid direct sunlight)"
+              value={form.care_instructions}
+              onChange={(e) => setForm({ ...form, care_instructions: e.target.value })}
+            />
             <div>
               <label className="flex flex-col items-center justify-center gap-1.5 border-2 border-dashed rounded-lg p-4 cursor-pointer hover:bg-muted/40 transition-colors">
                 {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5 text-muted-foreground" />}

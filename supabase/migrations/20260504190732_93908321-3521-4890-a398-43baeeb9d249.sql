@@ -1,0 +1,4 @@
+ALTER TABLE public.products
+ADD COLUMN IF NOT EXISTS materials TEXT,
+ADD COLUMN IF NOT EXISTS dimensions TEXT,
+ADD COLUMN IF NOT EXISTS care_instructions TEXT;

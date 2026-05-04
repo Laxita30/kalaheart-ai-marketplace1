@@ -236,6 +236,9 @@ export async function createProduct(payload: {
   category: string;
   stock?: number;
   images?: string[];
+  materials?: string;
+  dimensions?: string;
+  care_instructions?: string;
 }) {
   const artist = await getMyArtist();
   if (!artist) throw new Error("Create your artist profile first");
@@ -256,6 +259,9 @@ export async function updateProduct(id: string, payload: Partial<{
   stock: number;
   images: string[];
   is_active: boolean;
+  materials: string;
+  dimensions: string;
+  care_instructions: string;
 }>) {
   const { data, error } = await supabase
     .from("products")
