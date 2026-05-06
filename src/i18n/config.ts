@@ -1,6 +1,5 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-import LanguageDetector from "i18next-browser-languagedetector";
 
 export const SUPPORTED_LANGUAGES = [
   { code: "en", label: "English", native: "English" },
@@ -69,14 +68,21 @@ const resources = {
   }},
 };
 
+const stored = (() => {
+  try { return localStorage.getItem("i18nextLng"); } catch { return null; }
+})();
+
 i18n
-  .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources,
+    lng: stored || "en", // English by default; respect explicit user choice if set
     fallbackLng: "en",
     interpolation: { escapeValue: false },
-    detection: { order: ["localStorage", "navigator"], caches: ["localStorage"] },
   });
+
+i18n.on("languageChanged", (lng) => {
+  try { localStorage.setItem("i18nextLng", lng); } catch { /* ignore */ }
+});
 
 export default i18n;

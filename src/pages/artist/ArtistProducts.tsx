@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Product = Awaited<ReturnType<typeof getMyProducts>>[number];
 
@@ -30,7 +31,23 @@ const empty = {
   care_instructions: "",
 };
 
-const STT_LANG: Record<string, string> = {
+const VOICE_LANGS: { code: string; label: string }[] = [
+  { code: "en-IN", label: "English (India)" },
+  { code: "hi-IN", label: "हिन्दी (Hindi)" },
+  { code: "bn-IN", label: "বাংলা (Bengali)" },
+  { code: "ta-IN", label: "தமிழ் (Tamil)" },
+  { code: "te-IN", label: "తెలుగు (Telugu)" },
+  { code: "mr-IN", label: "मराठी (Marathi)" },
+  { code: "gu-IN", label: "ગુજરાતી (Gujarati)" },
+  { code: "kn-IN", label: "ಕನ್ನಡ (Kannada)" },
+  { code: "ml-IN", label: "മലയാളം (Malayalam)" },
+  { code: "pa-IN", label: "ਪੰਜਾਬੀ (Punjabi)" },
+  { code: "or-IN", label: "ଓଡ଼ିଆ (Odia)" },
+  { code: "as-IN", label: "অসমীয়া (Assamese)" },
+  { code: "ur-IN", label: "اردو (Urdu)" },
+  { code: "ne-NP", label: "नेपाली (Nepali)" },
+];
+const STT_DEFAULT: Record<string, string> = {
   en: "en-IN", hi: "hi-IN", bn: "bn-IN", ta: "ta-IN", te: "te-IN", mr: "mr-IN",
   gu: "gu-IN", kn: "kn-IN", ml: "ml-IN", pa: "pa-IN", or: "or-IN", as: "as-IN",
   ur: "ur-IN", ne: "ne-NP",
@@ -50,9 +67,11 @@ const ArtistProducts = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
 
-  const sttLang = STT_LANG[i18n.language.split("-")[0]] || "en-IN";
+  const [voiceLang, setVoiceLang] = useState<string>(
+    () => STT_DEFAULT[i18n.language.split("-")[0]] || "en-IN",
+  );
   const { supported: sttSupported, listening, transcript, start: startMic, stop: stopMic, reset: resetMic } =
-    useSpeechRecognition(sttLang);
+    useSpeechRecognition(voiceLang);
 
   const load = async () => {
     const artist = await getMyArtist();
@@ -254,9 +273,23 @@ const ArtistProducts = () => {
                     {listening ? t("product.listening") : t("product.voiceDescribe")}
                   </Button>
                 ) : (
-                  <span className="text-xs text-muted-foreground">Voice not supported here</span>
+                  <span className="text-xs text-muted-foreground">
+                    Voice input is not supported in this browser. Try Chrome or Edge.
+                  </span>
                 )}
               </div>
+              {sttSupported && (
+                <Select value={voiceLang} onValueChange={(v) => { if (!listening) setVoiceLang(v); }} disabled={listening}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Voice language" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {VOICE_LANGS.map((l) => (
+                      <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               {transcript && <p className="text-xs text-muted-foreground italic">"{transcript}"</p>}
               <Button
                 type="button" size="sm" variant="secondary" className="w-full"

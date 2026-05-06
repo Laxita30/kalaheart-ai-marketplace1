@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Chatbot from "@/components/Chatbot";
+import AutoTranslator from "@/i18n/AutoTranslator";
 import Index from "./pages/Index";
 import BrowseProducts from "./pages/BrowseProducts";
 import ProductDetail from "./pages/ProductDetail";
@@ -45,6 +46,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <AutoTranslator />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/welcome" element={<RoleSelect />} />
