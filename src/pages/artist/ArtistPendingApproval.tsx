@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Clock, CheckCircle2, XCircle, Mail, RefreshCw, LogOut } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, Mail, RefreshCw, LogOut, Send } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 type ArtistRow = {
   id: string;
@@ -21,6 +22,61 @@ const ArtistPendingApproval = () => {
   const navigate = useNavigate();
   const [artist, setArtist] = useState<ArtistRow | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const [resending, setResending] = useState(false);
+  const [lastResentAt, setLastResentAt] = useState<number | null>(null);
+
+  const resendRequest = async () => {
+    if (!user || !artist) return;
+    if (lastResentAt && Date.now() - lastResentAt < 60_000) {
+      toast({
+        title: "Please wait a moment",
+        description: "You can resend the request again in a minute.",
+      });
+      return;
+    }
+    setResending(true);
+    try {
+      // Bump submitted_at so the application reappears at the top of the admin queue
+      const { error: updErr } = await supabase
+        .from("artists")
+        .update({ submitted_at: new Date().toISOString() } as any)
+        .eq("id", artist.id);
+      if (updErr) throw updErr;
+
+      // Notify all admins in-app
+      const { data: admins } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "admin");
+      if (admins && admins.length) {
+        await supabase.from("notifications").insert(
+          admins.map((a: any) => ({
+            user_id: a.user_id,
+            type: "system",
+            title: "Artist application reminder",
+            body: `${artist.shop_name} resent their application for review.`,
+            link: "/admin/artists/review",
+          })),
+        );
+      }
+
+      setLastResentAt(Date.now());
+      toast({
+        title: "Request resent",
+        description: "Our admin team has been notified again.",
+      });
+      load();
+    } catch (e: any) {
+      toast({
+        title: "Couldn't resend",
+        description: e.message ?? "Please try again shortly.",
+        variant: "destructive",
+      });
+    } finally {
+      setResending(false);
+    }
+  };
 
   const load = async () => {
     if (!user) return;
@@ -160,6 +216,10 @@ const ArtistPendingApproval = () => {
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
               <Button variant="outline" onClick={load}>
                 <RefreshCw className="h-4 w-4" /> Refresh status
+              </Button>
+              <Button onClick={resendRequest} disabled={resending}>
+                <Send className="h-4 w-4" />
+                {resending ? "Resending…" : "Resend request to admin"}
               </Button>
               <Button variant="ghost" onClick={async () => { await signOut(); navigate("/"); }}>
                 <LogOut className="h-4 w-4" /> Sign out
