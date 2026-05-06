@@ -27,6 +27,7 @@ import ArtistOrders from "./pages/artist/ArtistOrders";
 import ArtistAnalytics from "./pages/artist/ArtistAnalytics";
 import ArtistProfile from "./pages/artist/ArtistProfile";
 import ArtistPendingApproval from "./pages/artist/ArtistPendingApproval";
+import ArtistChats from "./pages/artist/ArtistChats";
 import AdminOverview from "./pages/admin/AdminOverview";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminArtists from "./pages/admin/AdminArtists";
@@ -68,6 +69,7 @@ const App = () => (
             <Route path="/artist/orders" element={<ArtistOrders />} />
             <Route path="/artist/analytics" element={<ArtistAnalytics />} />
             <Route path="/artist/profile" element={<ArtistProfile />} />
+            <Route path="/artist/chats" element={<ArtistChats />} />
             <Route path="/admin" element={<AdminOverview />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/artists" element={<AdminArtists />} />
