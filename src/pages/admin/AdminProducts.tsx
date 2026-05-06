@@ -11,7 +11,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logAdminAction } from "@/lib/adminAudit";
-import { Trash2 } from "lucide-react";
+import { Trash2, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const AdminProducts = () => {
   const [rows, setRows] = useState<any[]>([]);
@@ -89,7 +90,15 @@ const AdminProducts = () => {
             <TableBody>
               {rows.map((p) => (
                 <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.title}</TableCell>
+                  <TableCell className="font-medium">
+                    <Link
+                      to={`/product/${p.id}`}
+                      className="inline-flex items-center gap-1 hover:text-primary hover:underline"
+                    >
+                      {p.title}
+                      <ExternalLink className="h-3 w-3 opacity-60" />
+                    </Link>
+                  </TableCell>
                   <TableCell>{p.artists?.shop_name ?? "—"}</TableCell>
                   <TableCell>{p.category}</TableCell>
                   <TableCell>${Number(p.price).toFixed(2)}</TableCell>
