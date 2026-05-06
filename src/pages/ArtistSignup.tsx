@@ -239,6 +239,31 @@ const ArtistSignup = () => {
         title: "Submitted for review!",
         description: "An admin will review your shop shortly.",
       });
+
+      // Verify the artist role was assigned before redirecting.
+      // The handle_new_user trigger should have created it; poll briefly in case of replication lag.
+      let hasArtistRole = false;
+      for (let i = 0; i < 8; i++) {
+        const { data: roleRow } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "artist")
+          .maybeSingle();
+        if (roleRow) { hasArtistRole = true; break; }
+        await new Promise((r) => setTimeout(r, 400));
+      }
+
+      if (!hasArtistRole) {
+        toast({
+          title: "Account created, but artist role not yet assigned",
+          description: "Please log in again in a moment. If this persists, contact support.",
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
+
       navigate("/artist/pending");
     } catch (e: any) {
       toast({ title: "Submission failed", description: e.message, variant: "destructive" });
