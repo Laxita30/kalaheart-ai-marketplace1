@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingBag, BarChart3, Store, LogOut, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingBag, BarChart3, Store, LogOut, ArrowLeft, MessageCircle } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,7 @@ const nav = [
   { to: "/artist", label: "Overview", icon: LayoutDashboard, end: true },
   { to: "/artist/products", label: "Products", icon: Package },
   { to: "/artist/orders", label: "Orders", icon: ShoppingBag },
+  { to: "/artist/chats", label: "Messages", icon: MessageCircle },
   { to: "/artist/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/artist/profile", label: "Shop Profile", icon: Store },
 ];
