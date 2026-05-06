@@ -74,6 +74,23 @@ const AdminArtistReview = () => {
         .eq("id", openSubmission.id);
       if (error) throw error;
 
+      // Ensure role membership matches the decision so the artist
+      // immediately gains (or loses) access to artist-only features.
+      if (decision === "approved") {
+        await supabase
+          .from("user_roles")
+          .upsert(
+            { user_id: openSubmission.user_id, role: "artist" as any },
+            { onConflict: "user_id,role" } as any,
+          );
+      } else {
+        await supabase
+          .from("user_roles")
+          .delete()
+          .eq("user_id", openSubmission.user_id)
+          .eq("role", "artist" as any);
+      }
+
       await logAdminAction({
         action: decision === "approved" ? "artist_approved" : "artist_revoked",
         target_type: "artist",
