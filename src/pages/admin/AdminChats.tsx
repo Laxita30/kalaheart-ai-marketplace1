@@ -185,9 +185,8 @@ const AdminChats = () => {
                     selectedThread === t.id ? "bg-accent" : ""
                   }`}
                 >
-                  <div className="font-medium truncate">User ↔ Artist</div>
-                  <div className="text-xs text-muted-foreground mt-0.5 font-mono truncate">
-                    {t.user_id.slice(0, 8)}… ↔ {t.artist_user_id.slice(0, 8)}…
+                  <div className="font-medium truncate">
+                    {t.user_name} <span className="text-muted-foreground">↔</span> {t.artist_name}
                   </div>
                   <div className="text-xs text-muted-foreground mt-0.5">
                     {formatDistanceToNow(new Date(t.last_message_at), { addSuffix: true })}
@@ -199,14 +198,47 @@ const AdminChats = () => {
               {!selectedThread && (
                 <p className="text-sm text-muted-foreground text-center py-12">Select a thread to inspect.</p>
               )}
-              {dmMsgs.map((m) => (
-                <div key={m.id} className="rounded-xl border bg-card px-3 py-2 text-sm">
-                  <div className="font-mono text-[10px] text-muted-foreground mb-1">
-                    sender: {m.sender_id.slice(0, 8)}… · {new Date(m.created_at).toLocaleString()}
+              {dmMsgs.map((m) => {
+                const thread = threads.find((t) => t.id === selectedThread);
+                const isArtist = thread?.artist_user_id === m.sender_id;
+                const senderName =
+                  nameMap[m.sender_id] ??
+                  (isArtist ? thread?.artist_name : thread?.user_name) ??
+                  m.sender_id.slice(0, 8);
+                return (
+                  <div
+                    key={m.id}
+                    className={`flex ${isArtist ? "justify-start" : "justify-end"}`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${
+                        isArtist ? "bg-secondary" : "bg-primary text-primary-foreground"
+                      }`}
+                    >
+                      <div className="text-[10px] opacity-80 mb-1">
+                        <span className="font-medium">{senderName}</span>
+                        <span className="mx-1">·</span>
+                        {isArtist ? "Artist" : "User"}
+                        <span className="mx-1">·</span>
+                        {new Date(m.created_at).toLocaleString()}
+                      </div>
+                      {m.attachment_type === "image" && m.attachment_url && (
+                        <a href={m.attachment_url} target="_blank" rel="noreferrer">
+                          <img
+                            src={m.attachment_url}
+                            alt="attachment"
+                            className="rounded-md mb-1 max-h-60 w-auto object-cover"
+                          />
+                        </a>
+                      )}
+                      {m.attachment_type === "audio" && m.attachment_url && (
+                        <audio controls src={m.attachment_url} className="mb-1 max-w-full" />
+                      )}
+                      {m.content && <div className="whitespace-pre-wrap">{m.content}</div>}
+                    </div>
                   </div>
-                  <div className="whitespace-pre-wrap">{m.content}</div>
-                </div>
-              ))}
+                );
+              })}
             </Card>
           </div>
         </TabsContent>
