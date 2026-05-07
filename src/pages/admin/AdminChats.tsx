@@ -27,12 +27,16 @@ type Thread = {
   user_id: string;
   artist_user_id: string;
   last_message_at: string;
+  user_name?: string;
+  artist_name?: string;
 };
 
 type DmMsg = {
   id: string;
   sender_id: string;
   content: string;
+  attachment_url?: string | null;
+  attachment_type?: string | null;
   created_at: string;
 };
 
@@ -44,6 +48,7 @@ const AdminChats = () => {
   const [threads, setThreads] = useState<Thread[]>([]);
   const [selectedThread, setSelectedThread] = useState<string | null>(null);
   const [dmMsgs, setDmMsgs] = useState<DmMsg[]>([]);
+  const [nameMap, setNameMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     supabase
@@ -52,12 +57,37 @@ const AdminChats = () => {
       .order("updated_at", { ascending: false })
       .limit(200)
       .then(({ data }) => setConvos((data ?? []) as Convo[]));
-    supabase
-      .from("chat_threads")
-      .select("*")
-      .order("last_message_at", { ascending: false })
-      .limit(200)
-      .then(({ data }) => setThreads((data ?? []) as Thread[]));
+    (async () => {
+      const { data: ts } = await supabase
+        .from("chat_threads")
+        .select("*")
+        .order("last_message_at", { ascending: false })
+        .limit(200);
+      const rawThreads = (ts ?? []) as Thread[];
+      const userIds = Array.from(
+        new Set(rawThreads.flatMap((t) => [t.user_id, t.artist_user_id])),
+      );
+      const [{ data: profs }, { data: arts }] = await Promise.all([
+        supabase.from("profiles").select("user_id, first_name, last_name, email").in("user_id", userIds),
+        supabase.from("artists").select("user_id, shop_name").in("user_id", userIds),
+      ]);
+      const map: Record<string, string> = {};
+      (profs ?? []).forEach((p: any) => {
+        const name = [p.first_name, p.last_name].filter(Boolean).join(" ").trim();
+        map[p.user_id] = name || p.email || p.user_id.slice(0, 8);
+      });
+      (arts ?? []).forEach((a: any) => {
+        if (a.shop_name) map[a.user_id] = a.shop_name;
+      });
+      setNameMap(map);
+      setThreads(
+        rawThreads.map((t) => ({
+          ...t,
+          user_name: map[t.user_id] ?? t.user_id.slice(0, 8),
+          artist_name: map[t.artist_user_id] ?? t.artist_user_id.slice(0, 8),
+        })),
+      );
+    })();
   }, []);
 
   useEffect(() => {
@@ -74,7 +104,7 @@ const AdminChats = () => {
     if (!selectedThread) return;
     supabase
       .from("chat_messages")
-      .select("id, sender_id, content, created_at")
+      .select("id, sender_id, content, attachment_url, attachment_type, created_at")
       .eq("thread_id", selectedThread)
       .order("created_at", { ascending: true })
       .then(({ data }) => setDmMsgs((data ?? []) as DmMsg[]));
