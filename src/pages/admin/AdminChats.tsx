@@ -197,52 +197,30 @@ const AdminChats = () => {
                 </button>
               ))}
             </Card>
-            <Card className="p-4 max-h-[70vh] overflow-y-auto space-y-3">
-              {!selectedThread && (
-                <p className="text-sm text-muted-foreground text-center py-12">Select a thread to inspect.</p>
-              )}
-              {dmMsgs.map((m) => {
-                const thread = threads.find((t) => t.id === selectedThread);
-                const isArtist = thread?.artist_user_id === m.sender_id;
-                const senderName =
-                  nameMap[m.sender_id] ??
-                  (isArtist ? thread?.artist_name : thread?.user_name) ??
-                  m.sender_id.slice(0, 8);
-                return (
-                  <div
-                    key={m.id}
-                    className={`flex ${isArtist ? "justify-start" : "justify-end"}`}
-                  >
-                    <div
-                      className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${
-                        isArtist ? "bg-secondary" : "bg-primary text-primary-foreground"
-                      }`}
-                    >
-                      <div className="text-[10px] opacity-80 mb-1">
-                        <span className="font-medium">{senderName}</span>
-                        <span className="mx-1">·</span>
-                        {isArtist ? "Artist" : "User"}
-                        <span className="mx-1">·</span>
-                        {new Date(m.created_at).toLocaleString()}
+            <div>
+              {!selectedThread || !user ? (
+                <Card className="p-4 max-h-[70vh] flex items-center justify-center">
+                  <p className="text-sm text-muted-foreground py-12">Select a thread to inspect.</p>
+                </Card>
+              ) : (
+                <div className="space-y-2">
+                  {(() => {
+                    const t = threads.find((x) => x.id === selectedThread);
+                    return (
+                      <div className="flex items-center justify-between rounded-md border bg-card px-3 py-2">
+                        <div className="text-sm">
+                          <span className="font-medium">{t?.user_name}</span>
+                          <span className="text-muted-foreground mx-1">↔</span>
+                          <span className="font-medium">{t?.artist_name}</span>
+                        </div>
+                        <Badge variant="outline" className="text-[10px]">Admin moderator</Badge>
                       </div>
-                      {m.attachment_type === "image" && m.attachment_url && (
-                        <a href={m.attachment_url} target="_blank" rel="noreferrer">
-                          <img
-                            src={m.attachment_url}
-                            alt="attachment"
-                            className="rounded-md mb-1 max-h-60 w-auto object-cover"
-                          />
-                        </a>
-                      )}
-                      {m.attachment_type === "audio" && m.attachment_url && (
-                        <audio controls src={m.attachment_url} className="mb-1 max-w-full" />
-                      )}
-                      {m.content && <div className="whitespace-pre-wrap">{m.content}</div>}
-                    </div>
-                  </div>
-                );
-              })}
-            </Card>
+                    );
+                  })()}
+                  <ChatThreadView threadId={selectedThread} currentUserId={user.id} heightClass="h-[60vh]" />
+                </div>
+              )}
+            </div>
           </div>
         </TabsContent>
       </Tabs>
