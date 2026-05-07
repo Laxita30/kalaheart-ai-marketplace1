@@ -104,6 +104,39 @@ const Chatbot = () => {
     scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight);
   }, [messages]);
 
+  // Load the user's most recent saved chatbot conversation on sign-in / open.
+  useEffect(() => {
+    if (!user) {
+      setConversationId(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data: convo } = await supabase
+        .from("ai_conversations")
+        .select("id, language")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled || !convo) return;
+      const { data: msgs } = await supabase
+        .from("ai_messages")
+        .select("role, content")
+        .eq("conversation_id", convo.id)
+        .order("created_at", { ascending: true });
+      if (cancelled) return;
+      setConversationId(convo.id);
+      if (convo.language) setLanguage(convo.language);
+      if (msgs && msgs.length > 0) {
+        setMessages(msgs.map((m: any) => ({ role: m.role as "user" | "assistant", content: m.content })));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
   const send = async () => {
     if (!input.trim() || loading || !language) return;
     const userMsg: Msg = { role: "user", content: input.trim() };
