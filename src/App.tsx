@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Chatbot from "@/components/Chatbot";
+import RequireAuth from "@/components/RequireAuth";
 import AutoTranslator from "@/i18n/AutoTranslator";
 import Index from "./pages/Index";
 import BrowseProducts from "./pages/BrowseProducts";
@@ -52,7 +53,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/welcome" element={<RoleSelect />} />
             <Route path="/browse" element={<BrowseProducts />} />
-            <Route path="/product/:id" element={<ProductDetail />} />
+            <Route path="/product/:id" element={<RequireAuth><ProductDetail /></RequireAuth>} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/artist/signup" element={<ArtistSignup />} />

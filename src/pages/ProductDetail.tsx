@@ -30,7 +30,7 @@ import { getProduct, addToCart, toggleWishlist } from "@/lib/api";
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -39,14 +39,7 @@ const ProductDetail = () => {
   const [activeImage, setActiveImage] = useState(0);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate(`/login?redirect=/product/${id ?? ""}`, { replace: true });
-    }
-  }, [authLoading, user, id, navigate]);
-
-  useEffect(() => {
     if (!id) return;
-    if (!user) return;
     (async () => {
       try {
         const p = await getProduct(id);
