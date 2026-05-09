@@ -63,7 +63,8 @@ const Signup = () => {
       toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Account created!", description: "Check your email to verify your account." });
-      navigate("/login");
+      const redirect = window.location.search; // forward ?redirect=... to login
+      navigate(`/login${redirect}`);
     }
   };
 
