@@ -1,9 +1,8 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Heart, ShoppingCart, User, LogOut, Store, Shield } from "lucide-react";
+import { Heart, ShoppingCart, User, LogOut } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { useIsAdmin } from "@/hooks/useIsAdmin";
 import NotificationsBell from "@/components/NotificationsBell";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
@@ -12,7 +11,6 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { isAdmin } = useIsAdmin();
   const { t } = useTranslation();
   const isLanding = location.pathname === "/";
 
