@@ -143,7 +143,7 @@ const ProductDetail = () => {
                 src={images[activeImage]}
                 alt={product.title}
                 className="w-full aspect-square object-cover"
-               onError={(e) => { const t = e.currentTarget as HTMLImageElement; if (!t.dataset.fb) { t.dataset.fb = "1"; t.src = "/placeholder.svg"; } }} />
+               onError={(e) => { const t = e.currentTarget as HTMLImageElement; if (!t.dataset.fb) { t.dataset.fb = "1"; t.src = `https://picsum.photos/seed/${encodeURIComponent(t.alt || "art")}/600/600`; } }} />
             </div>
             {images.length > 1 && (
               <div className="grid grid-cols-4 gap-3">
@@ -156,7 +156,7 @@ const ProductDetail = () => {
                       activeImage === i ? "ring-2 ring-primary" : "opacity-80 hover:opacity-100"
                     }`}
                   >
-                    <img src={src} alt={`${product.title} ${i + 1}`} className="w-full h-full object-cover"  onError={(e) => { const t = e.currentTarget as HTMLImageElement; if (!t.dataset.fb) { t.dataset.fb = "1"; t.src = "/placeholder.svg"; } }} />
+                    <img src={src} alt={`${product.title} ${i + 1}`} className="w-full h-full object-cover"  onError={(e) => { const t = e.currentTarget as HTMLImageElement; if (!t.dataset.fb) { t.dataset.fb = "1"; t.src = `https://picsum.photos/seed/${encodeURIComponent(t.alt || "art")}/600/600`; } }} />
                   </button>
                 ))}
               </div>
@@ -306,7 +306,7 @@ const ProductDetail = () => {
             <div className="flex items-start gap-4">
               <div className="h-14 w-14 rounded-full bg-accent flex items-center justify-center shrink-0 overflow-hidden">
                 {artist.profile_photo_url ? (
-                  <img src={artist.profile_photo_url} alt={artist.shop_name} className="h-full w-full object-cover"  onError={(e) => { const t = e.currentTarget as HTMLImageElement; if (!t.dataset.fb) { t.dataset.fb = "1"; t.src = "/placeholder.svg"; } }} />
+                  <img src={artist.profile_photo_url} alt={artist.shop_name} className="h-full w-full object-cover"  onError={(e) => { const t = e.currentTarget as HTMLImageElement; if (!t.dataset.fb) { t.dataset.fb = "1"; t.src = `https://picsum.photos/seed/${encodeURIComponent(t.alt || "art")}/600/600`; } }} />
                 ) : <User className="h-7 w-7 text-primary" />}
               </div>
               <div>

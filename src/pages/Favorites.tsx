@@ -71,7 +71,7 @@ const Favorites = () => {
                     src={item.products?.images?.[0] || "/placeholder.svg"}
                     alt={item.products?.title}
                     className="w-full aspect-square object-cover hover:scale-105 transition-transform"
-                   onError={(e) => { const t = e.currentTarget as HTMLImageElement; if (!t.dataset.fb) { t.dataset.fb = "1"; t.src = "/placeholder.svg"; } }} />
+                   onError={(e) => { const t = e.currentTarget as HTMLImageElement; if (!t.dataset.fb) { t.dataset.fb = "1"; t.src = `https://picsum.photos/seed/${encodeURIComponent(t.alt || "art")}/600/600`; } }} />
                 </Link>
                 <div className="p-4">
                   <Link to={`/product/${item.product_id}`} className="font-semibold hover:text-primary">
