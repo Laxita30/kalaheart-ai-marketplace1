@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Package, Truck, MapPin, CheckCircle2, Clock, CalendarClock, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import SafeImage from "@/components/SafeImage";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   pending: "secondary",
@@ -262,17 +263,13 @@ const OrderDetail = () => {
               {order.order_items?.map((item) => (
                 <div key={item.id} className="flex gap-4">
                   <div className="h-20 w-20 rounded-lg bg-muted overflow-hidden flex-shrink-0">
-                    {item.products?.images?.[0] ? (
-                      <img
-                        src={item.products.images[0]}
-                        alt={item.products.title}
-                        className="h-full w-full object-cover"
-                       onError={(e) => { const t = e.currentTarget as HTMLImageElement; if (!t.dataset.fb) { t.dataset.fb = "1"; t.src = `https://picsum.photos/seed/${encodeURIComponent(t.alt || "art")}/600/600`; } }} />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center text-muted-foreground">
-                        <Package className="h-6 w-6" />
-                      </div>
-                    )}
+                    <SafeImage
+                      src={item.products?.images?.[0]}
+                      alt={item.products?.title || "Product"}
+                      kind="product"
+                      fallbackSeed={item.product_id}
+                      className="h-full w-full object-cover"
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{item.products?.title}</p>
