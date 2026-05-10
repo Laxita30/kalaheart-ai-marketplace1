@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { getWishlistItems, toggleWishlist, addToCart } from "@/lib/api";
+import SafeImage from "@/components/SafeImage";
 
 const Favorites = () => {
   const { user } = useAuth();
@@ -67,11 +68,13 @@ const Favorites = () => {
             {items.map((item) => (
               <Card key={item.id} className="overflow-hidden">
                 <Link to={`/product/${item.product_id}`}>
-                  <img
-                    src={item.products?.images?.[0] || "/placeholder.svg"}
-                    alt={item.products?.title}
+                  <SafeImage
+                    src={item.products?.images?.[0]}
+                    alt={item.products?.title || "Product"}
+                    kind="product"
+                    fallbackSeed={item.product_id}
                     className="w-full aspect-square object-cover hover:scale-105 transition-transform"
-                   onError={(e) => { const t = e.currentTarget as HTMLImageElement; if (!t.dataset.fb) { t.dataset.fb = "1"; t.src = `https://picsum.photos/seed/${encodeURIComponent(t.alt || "art")}/600/600`; } }} />
+                  />
                 </Link>
                 <div className="p-4">
                   <Link to={`/product/${item.product_id}`} className="font-semibold hover:text-primary">
