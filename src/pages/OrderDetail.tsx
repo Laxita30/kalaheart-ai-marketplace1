@@ -267,7 +267,7 @@ const OrderDetail = () => {
                       src={item.products?.images?.[0]}
                       alt={item.products?.title || "Product"}
                       kind="product"
-                      fallbackSeed={item.product_id}
+                      fallbackSeed={item.id}
                       className="h-full w-full object-cover"
                     />
                   </div>
