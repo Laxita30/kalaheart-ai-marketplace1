@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Sparkles, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { logRecClick, logRecImpressions } from "@/lib/recAnalytics";
+import SafeImage from "@/components/SafeImage";
 
 type RecProduct = {
   id: string;
