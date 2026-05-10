@@ -17,6 +17,7 @@ import AdminLogin from "./pages/AdminLogin";
 import ArtistSignup from "./pages/ArtistSignup";
 import Cart from "./pages/Cart";
 import Favorites from "./pages/Favorites";
+import Account from "./pages/Account";
 import NotificationPreferencesPage from "./pages/NotificationPreferences";
 import Orders from "./pages/Orders";
 import OrderDetail from "./pages/OrderDetail";
@@ -61,6 +62,7 @@ const App = () => (
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/favorites" element={<Favorites />} />
+            <Route path="/account" element={<RequireAuth><Account /></RequireAuth>} />
             <Route path="/settings/notifications" element={<NotificationPreferencesPage />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/orders/:id" element={<OrderDetail />} />

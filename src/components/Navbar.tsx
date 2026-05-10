@@ -56,9 +56,14 @@ const Navbar = () => {
               </>
             )}
             {user ? (
-              <button onClick={handleSignOut} className="text-foreground/60 hover:text-foreground transition-colors" title="Sign out">
-                <LogOut className="h-5 w-5" />
-              </button>
+              <>
+                <Link to="/account" className="text-foreground/60 hover:text-foreground transition-colors" title="My account">
+                  <User className="h-5 w-5" />
+                </Link>
+                <button onClick={handleSignOut} className="text-foreground/60 hover:text-foreground transition-colors" title="Sign out">
+                  <LogOut className="h-5 w-5" />
+                </button>
+              </>
             ) : (
               <Link to="/login" className="text-foreground/60 hover:text-foreground transition-colors">
                 <User className="h-5 w-5" />
