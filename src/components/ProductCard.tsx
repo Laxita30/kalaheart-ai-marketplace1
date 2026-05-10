@@ -1,6 +1,7 @@
 import { Heart, ShoppingCart, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Product } from "@/lib/data";
+import SafeImage from "@/components/SafeImage";
 
 const ProductCard = ({ product }: { product: Product }) => (
   <Link
@@ -8,14 +9,15 @@ const ProductCard = ({ product }: { product: Product }) => (
     className="group block rounded-lg border bg-card overflow-hidden hover:shadow-lg transition-shadow"
   >
     <div className="aspect-square overflow-hidden relative">
-      <img
+      <SafeImage
         src={product.image}
         alt={product.title}
-        loading="lazy"
+        kind="product"
+        fallbackSeed={product.id}
         width={400}
         height={400}
         className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-       onError={(e) => { const t = e.currentTarget as HTMLImageElement; if (!t.dataset.fb) { t.dataset.fb = "1"; t.src = `https://picsum.photos/seed/${encodeURIComponent(t.alt || "art")}/600/600`; } }} />
+      />
       <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
           onClick={(e) => { e.preventDefault(); }}
