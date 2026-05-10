@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { getCartItems, removeFromCart, placeOrder, updateCartQuantity } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
+import SafeImage from "@/components/SafeImage";
 
 const Cart = () => {
   const { user } = useAuth();
@@ -126,11 +127,13 @@ const Cart = () => {
             <div className="space-y-3">
               {items.map((item) => (
                 <Card key={item.id} className="p-4 flex gap-4">
-                  <img
-                    src={item.products?.images?.[0] || "/placeholder.svg"}
-                    alt={item.products?.title}
+                  <SafeImage
+                    src={item.products?.images?.[0]}
+                    alt={item.products?.title || "Product"}
+                    kind="product"
+                    fallbackSeed={item.product_id}
                     className="h-24 w-24 rounded-md object-cover"
-                   onError={(e) => { const t = e.currentTarget as HTMLImageElement; if (!t.dataset.fb) { t.dataset.fb = "1"; t.src = `https://picsum.photos/seed/${encodeURIComponent(t.alt || "art")}/600/600`; } }} />
+                  />
                   <div className="flex-1">
                     <Link to={`/product/${item.product_id}`} className="font-semibold hover:text-primary">
                       {item.products?.title}
