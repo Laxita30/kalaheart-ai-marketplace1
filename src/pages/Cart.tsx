@@ -130,7 +130,7 @@ const Cart = () => {
                     src={item.products?.images?.[0] || "/placeholder.svg"}
                     alt={item.products?.title}
                     className="h-24 w-24 rounded-md object-cover"
-                  />
+                   onError={(e) => { const t = e.currentTarget as HTMLImageElement; if (!t.dataset.fb) { t.dataset.fb = "1"; t.src = "/placeholder.svg"; } }} />
                   <div className="flex-1">
                     <Link to={`/product/${item.product_id}`} className="font-semibold hover:text-primary">
                       {item.products?.title}

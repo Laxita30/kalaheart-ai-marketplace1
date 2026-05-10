@@ -267,7 +267,7 @@ const OrderDetail = () => {
                         src={item.products.images[0]}
                         alt={item.products.title}
                         className="h-full w-full object-cover"
-                      />
+                       onError={(e) => { const t = e.currentTarget as HTMLImageElement; if (!t.dataset.fb) { t.dataset.fb = "1"; t.src = "/placeholder.svg"; } }} />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center text-muted-foreground">
                         <Package className="h-6 w-6" />

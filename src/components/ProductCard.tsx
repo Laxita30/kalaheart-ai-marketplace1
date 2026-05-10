@@ -15,7 +15,7 @@ const ProductCard = ({ product }: { product: Product }) => (
         width={400}
         height={400}
         className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-      />
+       onError={(e) => { const t = e.currentTarget as HTMLImageElement; if (!t.dataset.fb) { t.dataset.fb = "1"; t.src = "/placeholder.svg"; } }} />
       <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
           onClick={(e) => { e.preventDefault(); }}

@@ -136,7 +136,7 @@ const BrowseProducts = () => {
                         alt={p.title}
                         loading="lazy"
                         className="h-full w-full object-cover group-hover:scale-105 transition-transform"
-                      />
+                       onError={(e) => { const t = e.currentTarget as HTMLImageElement; if (!t.dataset.fb) { t.dataset.fb = "1"; t.src = "/placeholder.svg"; } }} />
                       <div className="absolute top-3 right-3 flex gap-2">
                         <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full" onClick={(e) => handleWishlist(e, p.id)}>
                           <Heart className={`h-4 w-4 ${wishlistIds.has(p.id) ? "fill-current text-red-500" : ""}`} />
