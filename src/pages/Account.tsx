@@ -17,6 +17,8 @@ const Account = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [pw, setPw] = useState({ next: "", confirm: "" });
+  const [pwSaving, setPwSaving] = useState(false);
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -81,6 +83,26 @@ const Account = () => {
       toast({ title: "Save failed", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Profile updated" });
+    }
+  };
+
+  const changePassword = async () => {
+    if (pw.next.length < 8) {
+      toast({ title: "Password too short", description: "Use at least 8 characters.", variant: "destructive" });
+      return;
+    }
+    if (pw.next !== pw.confirm) {
+      toast({ title: "Passwords do not match", variant: "destructive" });
+      return;
+    }
+    setPwSaving(true);
+    const { error } = await supabase.auth.updateUser({ password: pw.next });
+    setPwSaving(false);
+    if (error) {
+      toast({ title: "Password update failed", description: error.message, variant: "destructive" });
+    } else {
+      setPw({ next: "", confirm: "" });
+      toast({ title: "Password updated" });
     }
   };
 
