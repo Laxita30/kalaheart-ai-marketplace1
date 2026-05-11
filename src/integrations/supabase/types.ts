@@ -665,6 +665,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_artist_for_order: {
+        Args: { _order_id: string; _user_id: string }
+        Returns: boolean
+      }
       rec_analytics_summary: {
         Args: { _from: string; _to: string }
         Returns: {
