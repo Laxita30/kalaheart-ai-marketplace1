@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ShoppingBag, Palette, Shield } from "lucide-react";
+import { ShoppingBag, Palette } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Card } from "@/components/ui/card";
@@ -21,14 +21,6 @@ const roles = [
     signupTo: "/artist/signup",
     accent: "from-rose-500/10 to-pink-500/10",
   },
-  {
-    title: "I'm an Admin",
-    desc: "Moderate the marketplace, review artisans, and manage the platform.",
-    Icon: Shield,
-    loginTo: "/admin/login",
-    signupTo: null,
-    accent: "from-indigo-500/10 to-violet-500/10",
-  },
 ];
 
 const RoleSelect = () => (
@@ -40,7 +32,7 @@ const RoleSelect = () => (
         <p className="mt-4 text-muted-foreground">Choose how you want to enter the marketplace.</p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+      <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
         {roles.map(({ title, desc, Icon, loginTo, signupTo, accent }) => (
           <Card
             key={title}
