@@ -32,6 +32,7 @@ import {
 import { getMyArtistOrders, updateOrderStatus } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Check, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const STATUS_FLOW = ["pending", "accepted", "shipped", "delivered"] as const;
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -51,6 +52,26 @@ const ArtistOrders = () => {
   const load = () => getMyArtistOrders().then(setOrders);
   useEffect(() => {
     load();
+    const channel = supabase
+      .channel("artist-orders-feed")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "order_items" },
+        () => load(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders" },
+        () => load(),
+      )
+      .subscribe();
+
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleUpdate = async (orderId: string, status: string) => {
