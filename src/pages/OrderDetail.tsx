@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Package, Truck, MapPin, CheckCircle2, Clock, CalendarClock, XCircle } from "lucide-react";
+import { ArrowLeft, Package, Truck, MapPin, CheckCircle2, Clock, CalendarClock, XCircle, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import SafeImage from "@/components/SafeImage";
@@ -170,6 +170,20 @@ const OrderDetail = () => {
           </Badge>
         </div>
       </div>
+
+      {order.status === "delivered" && (
+        <Card className="p-4 mb-6 flex flex-wrap items-center justify-between gap-3 border-primary/30 bg-primary/5">
+          <div className="flex items-center gap-2">
+            <Star className="h-5 w-5 text-primary" />
+            <p className="text-sm">
+              How was your order? Share a review for the artist and other shoppers.
+            </p>
+          </div>
+          <Button asChild size="sm">
+            <Link to={`/orders/${order.id}/review`}>Write a review</Link>
+          </Button>
+        </Card>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">

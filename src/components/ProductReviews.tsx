@@ -33,6 +33,7 @@ const ProductReviews = ({ productId }: { productId: string }) => {
       .from("reviews")
       .select("id, rating, comment, created_at, user_id")
       .eq("product_id", productId)
+      .eq("is_public", true)
       .order("created_at", { ascending: false });
     const list = (data ?? []) as Review[];
     // attach profile names
