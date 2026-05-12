@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getProducts, addToCart, toggleWishlist, getWishlistItems } from "@/lib/api";
 import SafeImage from "@/components/SafeImage";
 
-const CATEGORIES = ["Pottery", "Painting", "Textile", "Jewelry", "Sculpture", "Decor"];
+const CATEGORIES = ["Pottery", "Painting", "Textile", "Jewelry", "Sculpture", "Decor", "Other"];
 
 const BrowseProducts = () => {
   const { user } = useAuth();
@@ -24,6 +24,8 @@ const BrowseProducts = () => {
   const [search, setSearch] = useState("");
   const [priceRange, setPriceRange] = useState([0, 300]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [draftPriceRange, setDraftPriceRange] = useState([0, 300]);
+  const [draftCategories, setDraftCategories] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -41,14 +43,29 @@ const BrowseProducts = () => {
   }, [user]);
 
   const toggleCategory = (cat: string) =>
-    setSelectedCategories((p) => p.includes(cat) ? p.filter((c) => c !== cat) : [...p, cat]);
+    setDraftCategories((p) => p.includes(cat) ? p.filter((c) => c !== cat) : [...p, cat]);
+
+  const applyFilters = () => {
+    setPriceRange(draftPriceRange);
+    setSelectedCategories(draftCategories);
+  };
+
+  const resetFilters = () => {
+    setDraftPriceRange([0, 300]);
+    setDraftCategories([]);
+    setPriceRange([0, 300]);
+    setSelectedCategories([]);
+  };
 
   const filtered = useMemo(() => products.filter((p) => {
     const text = `${p.title} ${p.artists?.shop_name || ""}`.toLowerCase();
     const matchSearch = text.includes(search.toLowerCase());
     const price = Number(p.price);
     const matchPrice = price >= priceRange[0] && price <= priceRange[1];
-    const matchCat = selectedCategories.length === 0 || selectedCategories.includes(p.category);
+    const matchCat =
+      selectedCategories.length === 0 ||
+      selectedCategories.includes(p.category) ||
+      (selectedCategories.includes("Other") && !CATEGORIES.slice(0, -1).includes(p.category));
     return matchSearch && matchPrice && matchCat;
   }), [products, search, priceRange, selectedCategories]);
 
@@ -94,9 +111,9 @@ const BrowseProducts = () => {
               <h3 className="font-semibold mb-4">Filters</h3>
               <div className="mb-6">
                 <h4 className="text-sm font-medium mb-3">Price Range</h4>
-                <Slider value={priceRange} onValueChange={setPriceRange} min={0} max={300} step={10} className="mb-2" />
+                <Slider value={draftPriceRange} onValueChange={setDraftPriceRange} min={0} max={300} step={10} className="mb-2" />
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>${priceRange[0]}</span><span>${priceRange[1]}</span>
+                  <span>${draftPriceRange[0]}</span><span>${draftPriceRange[1]}</span>
                 </div>
               </div>
               <div>
@@ -104,11 +121,15 @@ const BrowseProducts = () => {
                 <div className="space-y-2">
                   {CATEGORIES.map((cat) => (
                     <label key={cat} className="flex items-center gap-2 text-sm cursor-pointer">
-                      <Checkbox checked={selectedCategories.includes(cat)} onCheckedChange={() => toggleCategory(cat)} />
+                      <Checkbox checked={draftCategories.includes(cat)} onCheckedChange={() => toggleCategory(cat)} />
                       {cat}
                     </label>
                   ))}
                 </div>
+              </div>
+              <div className="mt-6 flex gap-2">
+                <Button className="flex-1" onClick={applyFilters}>Apply</Button>
+                <Button variant="outline" onClick={resetFilters}>Reset</Button>
               </div>
             </div>
           </aside>
