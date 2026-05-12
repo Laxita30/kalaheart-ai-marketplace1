@@ -376,6 +376,7 @@ export type Database = {
           created_at: string
           id: string
           shipping_address: string | null
+          special_request: string | null
           status: string
           total_price: number
           updated_at: string
@@ -385,6 +386,7 @@ export type Database = {
           created_at?: string
           id?: string
           shipping_address?: string | null
+          special_request?: string | null
           status?: string
           total_price: number
           updated_at?: string
@@ -394,6 +396,7 @@ export type Database = {
           created_at?: string
           id?: string
           shipping_address?: string | null
+          special_request?: string | null
           status?: string
           total_price?: number
           updated_at?: string
