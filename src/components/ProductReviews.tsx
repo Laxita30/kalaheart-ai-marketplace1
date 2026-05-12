@@ -15,6 +15,7 @@ type Review = {
   comment: string | null;
   created_at: string;
   user_id: string;
+  image_urls?: string[] | null;
   profiles?: { first_name: string | null; last_name: string | null; avatar_url: string | null } | null;
 };
 
@@ -31,7 +32,7 @@ const ProductReviews = ({ productId }: { productId: string }) => {
     setLoading(true);
     const { data } = await supabase
       .from("reviews")
-      .select("id, rating, comment, created_at, user_id")
+      .select("id, rating, comment, created_at, user_id, image_urls")
       .eq("product_id", productId)
       .eq("is_public", true)
       .order("created_at", { ascending: false });
@@ -52,6 +53,18 @@ const ProductReviews = ({ productId }: { productId: string }) => {
 
   useEffect(() => {
     load();
+    const channel = supabase
+      .channel(`reviews-${productId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "reviews", filter: `product_id=eq.${productId}` },
+        () => load(),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId]);
 
   const submit = async () => {
@@ -184,6 +197,21 @@ const ProductReviews = ({ productId }: { productId: string }) => {
                   </div>
                 </div>
                 {r.comment && <p className="text-sm mt-2 leading-relaxed">{r.comment}</p>}
+                {r.image_urls && r.image_urls.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {r.image_urls.map((url) => (
+                      <a
+                        key={url}
+                        href={url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block h-20 w-20 rounded-md overflow-hidden border"
+                      >
+                        <img src={url} alt="Review photo" className="h-full w-full object-cover" />
+                      </a>
+                    ))}
+                  </div>
+                )}
               </Card>
             );
           })}
