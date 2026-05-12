@@ -81,8 +81,6 @@ const OrderReview = () => {
   const setDraft = (productId: string, patch: Partial<Draft>) =>
     setDrafts((d) => ({ ...d, [productId]: { ...d[productId], ...patch } }));
 
-  const reviews = await Promise.resolve();
-
   const handleUpload = async (productId: string, files: FileList | null) => {
     if (!files || !files.length || !user) return;
     const current = drafts[productId];
