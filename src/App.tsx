@@ -39,7 +39,6 @@ import AdminProducts from "./pages/admin/AdminProducts";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminArtistReview from "./pages/admin/AdminArtistReview";
-import AdminRecommendations from "./pages/admin/AdminRecommendations";
 import AdminChats from "./pages/admin/AdminChats";
 
 const queryClient = new QueryClient();
