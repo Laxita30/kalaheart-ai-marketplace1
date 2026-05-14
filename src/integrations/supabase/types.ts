@@ -664,33 +664,7 @@ export type Database = {
       }
     }
     Views: {
-      public_profiles: {
-        Row: {
-          avatar_url: string | null
-          created_at: string | null
-          first_name: string | null
-          id: string | null
-          last_name: string | null
-          user_id: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string | null
-          first_name?: string | null
-          id?: string | null
-          last_name?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string | null
-          first_name?: string | null
-          id?: string | null
-          last_name?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       get_artist_buyer_contacts: {
@@ -727,6 +701,15 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      get_public_profiles: {
+        Args: { p_user_ids: string[] }
+        Returns: {
+          avatar_url: string
+          first_name: string
+          last_name: string
+          user_id: string
+        }[]
       }
       has_role: {
         Args: {
