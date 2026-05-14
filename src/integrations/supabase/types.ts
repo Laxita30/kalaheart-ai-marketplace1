@@ -667,6 +667,50 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_artist_buyer_contacts: {
+        Args: never
+        Returns: {
+          email: string
+          first_name: string
+          last_name: string
+          phone: string
+          user_id: string
+        }[]
+      }
+      get_artist_id_proof: { Args: { p_artist_id: string }; Returns: string }
+      get_my_profile: {
+        Args: never
+        Returns: {
+          address: string | null
+          age: number | null
+          avatar_url: string | null
+          blocked: boolean
+          created_at: string
+          email: string | null
+          first_name: string | null
+          gender: string | null
+          id: string
+          last_name: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      get_public_profiles: {
+        Args: { p_user_ids: string[] }
+        Returns: {
+          avatar_url: string
+          first_name: string
+          last_name: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -677,6 +721,16 @@ export type Database = {
       is_artist_for_order: {
         Args: { _order_id: string; _user_id: string }
         Returns: boolean
+      }
+      notify_order_buyer: {
+        Args: {
+          p_body: string
+          p_link: string
+          p_order_id: string
+          p_title: string
+          p_type: string
+        }
+        Returns: undefined
       }
       rec_analytics_summary: {
         Args: { _from: string; _to: string }

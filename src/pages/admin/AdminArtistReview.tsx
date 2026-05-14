@@ -47,7 +47,10 @@ const AdminArtistReview = () => {
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [filter]);
 
   const openReview = async (s: Submission) => {
-    setOpenSubmission(s);
+    // id_proof_url is column-restricted; fetch it on demand via a
+    // SECURITY DEFINER helper that validates admin role server-side.
+    const { data: proof } = await supabase.rpc("get_artist_id_proof", { p_artist_id: s.id });
+    setOpenSubmission({ ...s, id_proof_url: (proof as string | null) ?? null });
     setReviewNotes(s.review_notes ?? "");
   };
 

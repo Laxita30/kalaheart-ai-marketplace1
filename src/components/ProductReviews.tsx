@@ -40,10 +40,7 @@ const ProductReviews = ({ productId }: { productId: string }) => {
     // attach profile names
     const ids = Array.from(new Set(list.map((r) => r.user_id)));
     if (ids.length) {
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("user_id, first_name, last_name, avatar_url")
-        .in("user_id", ids);
+      const { data: profs } = await supabase.rpc("get_public_profiles", { p_user_ids: ids });
       const map = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
       list.forEach((r) => (r.profiles = map.get(r.user_id) ?? null));
     }
