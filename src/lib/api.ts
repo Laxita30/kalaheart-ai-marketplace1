@@ -300,11 +300,12 @@ export async function getMyArtistOrders() {
     new Set(rows.map((r: any) => r.orders?.user_id).filter(Boolean)),
   );
   if (buyerIds.length > 0) {
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("user_id, first_name, last_name, email, phone")
-      .in("user_id", buyerIds);
-    const byId = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+    const { data: profiles } = await supabase.rpc("get_artist_buyer_contacts");
+    const byId = new Map(
+      ((profiles as any[]) || [])
+        .filter((p) => buyerIds.includes(p.user_id))
+        .map((p: any) => [p.user_id, p]),
+    );
     for (const r of rows as any[]) {
       if (r.orders?.user_id) r.buyer = byId.get(r.orders.user_id) || null;
     }
@@ -327,13 +328,12 @@ export async function updateOrderStatus(orderId: string, status: string) {
       const prefs = await getNotificationPreferencesFor(data.user_id);
       const channel = status === "delivered" ? "inapp_delivery_events" : "inapp_order_updates";
       if (prefs[channel]) {
-        await supabase.from("notifications").insert({
-          user_id: data.user_id,
-          type: `order_${status}`,
-          title: copy.title,
-          body: copy.body,
-          link: `/orders/${orderId}`,
-          order_id: orderId,
+        await supabase.rpc("notify_order_buyer", {
+          p_order_id: orderId,
+          p_type: `order_${status}`,
+          p_title: copy.title,
+          p_body: copy.body,
+          p_link: `/orders/${orderId}`,
         });
       }
     }
