@@ -55,6 +55,28 @@ const ProductDetail = () => {
     })();
   }, [id, user]);
 
+  // Live stock updates for this product so the buyer always sees
+  // the current availability without refreshing.
+  useEffect(() => {
+    if (!id) return;
+    const channel = supabase
+      .channel(`product-stock-${id}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "products", filter: `id=eq.${id}` },
+        (payload) => {
+          const updated: any = payload.new;
+          setProduct((prev: any) =>
+            prev ? { ...prev, stock: updated.stock, is_active: updated.is_active } : prev,
+          );
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id]);
+
   const handleAddToCart = async () => {
     if (!user) { toast({ title: "Sign in to add to cart", variant: "destructive" }); navigate("/login"); return; }
     setBusy(true);
