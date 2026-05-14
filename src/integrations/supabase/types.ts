@@ -664,9 +664,70 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          first_name: string | null
+          id: string | null
+          last_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id?: string | null
+          last_name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id?: string | null
+          last_name?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      get_artist_buyer_contacts: {
+        Args: never
+        Returns: {
+          email: string
+          first_name: string
+          last_name: string
+          phone: string
+          user_id: string
+        }[]
+      }
+      get_artist_id_proof: { Args: { p_artist_id: string }; Returns: string }
+      get_my_profile: {
+        Args: never
+        Returns: {
+          address: string | null
+          age: number | null
+          avatar_url: string | null
+          blocked: boolean
+          created_at: string
+          email: string | null
+          first_name: string | null
+          gender: string | null
+          id: string
+          last_name: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -677,6 +738,16 @@ export type Database = {
       is_artist_for_order: {
         Args: { _order_id: string; _user_id: string }
         Returns: boolean
+      }
+      notify_order_buyer: {
+        Args: {
+          p_body: string
+          p_link: string
+          p_order_id: string
+          p_title: string
+          p_type: string
+        }
+        Returns: undefined
       }
       rec_analytics_summary: {
         Args: { _from: string; _to: string }
