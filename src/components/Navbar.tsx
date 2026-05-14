@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Heart, ShoppingCart, User, LogOut } from "lucide-react";
+import { Heart, ShoppingCart, User, LogOut, Package } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -47,6 +47,10 @@ const Navbar = () => {
             {user && <NotificationsBell />}
             {!isLanding && (
               <>
+                <Link to="/orders" className="text-foreground/60 hover:text-foreground transition-colors flex items-center gap-1 text-sm font-medium" title="My orders">
+                  <Package className="h-5 w-5" />
+                  <span className="hidden sm:inline">{t("nav.orders", "Orders")}</span>
+                </Link>
                 <Link to="/favorites" className="text-foreground/60 hover:text-foreground transition-colors">
                   <Heart className="h-5 w-5" />
                 </Link>
