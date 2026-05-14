@@ -24,6 +24,7 @@ interface Props {
 const ChatThreadView = ({ threadId, currentUserId, heightClass = "h-[60vh]" }: Props) => {
   const { toast } = useToast();
   const [msgs, setMsgs] = useState<Msg[]>([]);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [pendingFile, setPendingFile] = useState<{ file: File; previewUrl: string; kind: "image" | "audio" } | null>(null);
@@ -54,6 +55,23 @@ const ChatThreadView = ({ threadId, currentUserId, heightClass = "h-[60vh]" }: P
       supabase.removeChannel(channel);
     };
   }, [threadId]);
+
+  // Resolve attachment paths to short-lived signed URLs (chat-media is private).
+  useEffect(() => {
+    const paths = msgs
+      .map((m) => m.attachment_url)
+      .filter((p): p is string => !!p && !/^https?:\/\//.test(p) && !signedUrls[p]);
+    if (paths.length === 0) return;
+    (async () => {
+      const { data } = await supabase.storage.from("chat-media").createSignedUrls(paths, 3600);
+      if (!data) return;
+      setSignedUrls((prev) => {
+        const next = { ...prev };
+        data.forEach((d, i) => { if (d.signedUrl) next[paths[i]] = d.signedUrl; });
+        return next;
+      });
+    })();
+  }, [msgs, signedUrls]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -116,8 +134,8 @@ const ChatThreadView = ({ threadId, currentUserId, heightClass = "h-[60vh]" }: P
           .from("chat-media")
           .upload(path, pendingFile.file, { contentType: pendingFile.file.type, upsert: false });
         if (upErr) throw upErr;
-        const { data: pub } = supabase.storage.from("chat-media").getPublicUrl(path);
-        attachment_url = pub.publicUrl;
+        // Store the storage path; signed URLs are resolved on render.
+        attachment_url = path;
         attachment_type = pendingFile.kind;
       }
       const content = text.trim().slice(0, 2000) || null;
