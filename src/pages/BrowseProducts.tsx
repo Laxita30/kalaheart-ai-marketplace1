@@ -178,12 +178,11 @@ const BrowseProducts = () => {
               <p className="text-muted-foreground text-center py-12">No products found.</p>
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-5">
-                {filtered.map((p) => (
-                  {(() => {
-                    const stock = Number(p.stock ?? 0);
-                    const inStock = stock > 0;
-                    const lowStock = inStock && stock <= 5;
-                    return (
+                {filtered.map((p) => {
+                  const stock = Number(p.stock ?? 0);
+                  const inStock = stock > 0;
+                  const lowStock = inStock && stock <= 5;
+                  return (
                   <Link key={p.id} to={`/product/${p.id}`} className="group block rounded-lg border bg-card overflow-hidden hover:shadow-lg transition-shadow relative">
                     <div className="aspect-square overflow-hidden relative">
                       <SafeImage
@@ -273,9 +272,8 @@ const BrowseProducts = () => {
                       )}
                     </div>
                   </Link>
-                    );
-                  })()}
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
