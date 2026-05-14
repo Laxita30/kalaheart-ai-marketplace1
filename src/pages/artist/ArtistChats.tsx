@@ -30,14 +30,11 @@ const ArtistChats = () => {
       const ids = (rows ?? []).map((r) => r.user_id);
       const profMap = new Map<string, string>();
       if (ids.length > 0) {
-        const { data: profs } = await supabase
-          .from("profiles")
-          .select("user_id, first_name, last_name, email")
-          .in("user_id", ids);
+        const { data: profs } = await supabase.rpc("get_public_profiles", { p_user_ids: ids });
         (profs ?? []).forEach((p: any) => {
           profMap.set(
             p.user_id,
-            [p.first_name, p.last_name].filter(Boolean).join(" ") || p.email || "Buyer",
+            [p.first_name, p.last_name].filter(Boolean).join(" ") || "Buyer",
           );
         });
       }
